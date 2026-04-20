@@ -25,23 +25,33 @@ export const Route = createFileRoute("/net-worth")({
   component: NetWorthPage,
 });
 
-const KIND_LABEL: Record<AssetKind, string> = {
+// Group asset kinds into clean classes for the breakdown.
+type Class = "Cash" | "Savings" | "Investments" | "Property" | "Vehicle" | "Valuables" | "Other";
+
+const CLASS_OF: Record<AssetKind, Class> = {
   cash: "Cash",
   savings: "Savings",
-  crypto: "Crypto",
-  stock: "Stocks",
+  crypto: "Investments",
+  stock: "Investments",
+  property: "Property",
+  vehicle: "Vehicle",
+  valuable: "Valuables",
+  electronics: "Other",
+  furniture: "Other",
   other: "Other",
 };
-const KIND_COLOR: Record<AssetKind, string> = {
-  cash: "oklch(0.72 0.17 152)",
-  savings: "oklch(0.66 0.18 252)",
-  crypto: "oklch(0.78 0.14 75)",
-  stock: "oklch(0.7 0.18 320)",
-  other: "oklch(0.55 0.02 268)",
+
+const CLASS_COLOR: Record<Class, string> = {
+  Cash: "oklch(0.72 0.17 152)",
+  Savings: "oklch(0.7 0.18 200)",
+  Investments: "oklch(0.66 0.18 252)",
+  Property: "oklch(0.7 0.18 320)",
+  Vehicle: "oklch(0.78 0.14 75)",
+  Valuables: "oklch(0.66 0.21 25)",
+  Other: "oklch(0.55 0.02 268)",
 };
 
 function buildHistory(currentNet: number): { date: string; value: number }[] {
-  // Fake-but-believable smooth growth into current value
   const points = 30;
   const start = currentNet * 0.92;
   const out: { date: string; value: number }[] = [];
@@ -61,11 +71,17 @@ function NetWorthPage() {
   const base = state.baseCurrency;
   const nw = getNetWorth(state);
 
-  const breakdown: Record<AssetKind, number> = {
-    cash: 0, savings: 0, crypto: 0, stock: 0, other: 0,
+  const breakdown: Record<Class, number> = {
+    Cash: 0,
+    Savings: 0,
+    Investments: 0,
+    Property: 0,
+    Vehicle: 0,
+    Valuables: 0,
+    Other: 0,
   };
   for (const a of state.assets) {
-    breakdown[a.kind] += getAssetValueInBase(a, base, state.cryptoPrices);
+    breakdown[CLASS_OF[a.kind]] += getAssetValueInBase(a, base, state.cryptoPrices);
   }
   const data = buildHistory(nw);
   const change = data.length > 1 ? ((data[data.length - 1].value - data[0].value) / data[0].value) * 100 : 0;
@@ -131,7 +147,7 @@ function NetWorthPage() {
           Breakdown
         </h2>
         <ul className="space-y-3">
-          {(Object.keys(breakdown) as AssetKind[])
+          {(Object.keys(breakdown) as Class[])
             .filter((k) => breakdown[k] > 0)
             .sort((a, b) => breakdown[b] - breakdown[a])
             .map((k) => {
@@ -141,8 +157,8 @@ function NetWorthPage() {
                 <li key={k}>
                   <div className="mb-1.5 flex items-baseline justify-between">
                     <span className="flex items-center gap-2 text-[13px] font-medium text-foreground">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: KIND_COLOR[k] }} />
-                      {KIND_LABEL[k]}
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: CLASS_COLOR[k] }} />
+                      {k}
                       <span className="tabular text-[11px] font-normal text-muted-foreground">
                         {share.toFixed(0)}%
                       </span>
@@ -154,7 +170,7 @@ function NetWorthPage() {
                   <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated">
                     <div
                       className="h-full rounded-full"
-                      style={{ width: `${share}%`, backgroundColor: KIND_COLOR[k] }}
+                      style={{ width: `${share}%`, backgroundColor: CLASS_COLOR[k] }}
                     />
                   </div>
                 </li>
