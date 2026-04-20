@@ -26,6 +26,15 @@ type State = {
   cryptoPrices: Record<string, number>; // symbol -> USD price
   pricesLoadedAt?: string;
   onboardingComplete: boolean;
+  /** The most recent action — powers inline correction on the AI response. */
+  lastAction?: {
+    kind: "expense" | "income" | "asset" | "investment" | "goal" | "other";
+    transactionId?: string;
+    category?: TxCategory;
+    inferred?: boolean;
+    confidence?: number;
+    at: string;
+  };
 
   // setters
   setBaseCurrency: (c: Currency) => void;
@@ -39,6 +48,7 @@ type State = {
   addGoal: (g: Omit<Goal, "id" | "createdAt">) => Goal;
   addActivity: (kind: ActivityKind, text: string) => void;
   addMessage: (m: Omit<ChatMessage, "id" | "date">) => ChatMessage;
+  setLastAction: (a: State["lastAction"]) => void;
   setCryptoPrices: (p: Record<string, number>) => void;
   resetAll: () => void;
   seedDemo: () => void;
