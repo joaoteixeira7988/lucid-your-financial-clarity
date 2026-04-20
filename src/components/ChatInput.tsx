@@ -14,18 +14,31 @@ import { toBase, fmtMoney } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 const QUICK_ACTIONS: { label: string; prefill: string }[] = [
-  { label: "Food", prefill: "Spent  on food" },
+  { label: "Food", prefill: "Spent  on lunch" },
   { label: "Transport", prefill: "Spent  on Uber" },
   { label: "Shopping", prefill: "Spent  on shopping" },
   { label: "Add asset", prefill: "Bought a watch for " },
-  { label: "Add investment", prefill: "Add 0.1 ETH" },
-  { label: "Set goal", prefill: "I want to save 5000 in 3 months" },
+  { label: "Add investment", prefill: "Bought  of BTC" },
+  { label: "Set goal", prefill: "I want to save 5000 in 6 months" },
 ];
 
-export function ChatInput({ compact = false }: { compact?: boolean }) {
+/**
+ * Lucid Command Bar.
+ *
+ * Variants:
+ *   - "hero"   → tall, centered, dominant. Used when the user hasn't engaged yet.
+ *   - "docked" → sticky, compact at bottom. Used after first interaction.
+ *   - compact  → legacy small variant for embedded contexts.
+ */
+export function ChatInput({
+  variant = "docked",
+  compact = false,
+}: {
+  variant?: "hero" | "docked";
+  compact?: boolean;
+}) {
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const messages = useAppStore((s) => s.messages);
   const baseCurrency = useAppStore((s) => s.baseCurrency);
   const addMessage = useAppStore((s) => s.addMessage);
   const addTransaction = useAppStore((s) => s.addTransaction);
@@ -38,7 +51,7 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "0px";
-    el.style.height = Math.min(el.scrollHeight, 140) + "px";
+    el.style.height = Math.min(el.scrollHeight, 160) + "px";
   }, [text]);
 
   function handleQuick(prefill: string) {
@@ -106,7 +119,6 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
           e.quantity != null && e.symbol
             ? `Added investment: ${e.quantity} ${e.symbol}.`
             : `Added investment: ${e.symbol ?? e.assetName ?? "Investment"} (${formatBase(toBase(e.amount ?? 0, e.currency ?? baseCurrency, baseCurrency), baseCurrency)}).`;
-        // Investments funded with cash → debit cash if amount given.
         if (e.amount != null) {
           const baseAmt = toBase(e.amount, e.currency ?? baseCurrency, baseCurrency);
           adjustCash(-baseAmt);
@@ -116,7 +128,6 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
     } else if (result.intent === "asset_log") {
       result.entries.forEach((e) => {
         const baseAmt = toBase(e.amount ?? 0, e.currency ?? baseCurrency, baseCurrency);
-        // Cash/savings adjustments don't create a new asset row.
         if (e.assetKind === "cash" || e.assetKind === "savings") {
           adjustCash(baseAmt);
           addActivity(
@@ -130,7 +141,6 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
             value: baseAmt,
             costBasis: baseAmt,
           });
-          // Tangible asset purchase: cash leaves, asset value enters → net worth ~neutral
           adjustCash(-baseAmt);
           addActivity(
             "asset",
@@ -149,11 +159,8 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
       });
       addActivity("goal", `Goal created: ${result.goal.title}.`);
     }
-    // intent === "clarify" → just shows the question reply, no save.
 
-    // Build a premium, scenario-aware reply (1–2 short sentences).
     const reply = composeReply(result, value, baseCurrency);
-
     setTimeout(() => {
       addMessage({ role: "assistant", content: reply });
     }, 220);
@@ -168,18 +175,18 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
     }
   }
 
-  const showHint = !compact && messages.length === 0;
+  const isHero = variant === "hero" && !compact;
 
   return (
-    <div className="space-y-2.5">
+    <div className={cn("space-y-3", isHero && "space-y-4")}>
       {!compact && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {QUICK_ACTIONS.map((q) => (
             <button
               key={q.label}
               type="button"
               onClick={() => handleQuick(q.prefill)}
-              className="lucid-chip"
+              className="lucid-chip flex-shrink-0 whitespace-nowrap"
             >
               {q.label}
             </button>
@@ -188,38 +195,46 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
       )}
       <div
         className={cn(
-          "lucid-card relative flex items-end gap-2 p-2 pl-3.5 transition-shadow",
-          "focus-within:shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.4),0_8px_28px_-12px_oklch(0.66_0.18_252/0.45)]"
+          "lucid-card relative flex items-end gap-2 transition-all",
+          isHero
+            ? "rounded-[28px] p-2.5 pl-5 shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.22),0_18px_50px_-18px_oklch(0.66_0.18_252/0.55)]"
+            : "rounded-3xl p-2 pl-4",
+          "focus-within:shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.5),0_12px_36px_-12px_oklch(0.66_0.18_252/0.55)]"
         )}
       >
-        <Sparkles className="mb-2.5 h-4 w-4 flex-shrink-0 text-primary" />
+        <Sparkles
+          className={cn(
+            "flex-shrink-0 text-primary",
+            isHero ? "mb-3.5 h-[18px] w-[18px]" : "mb-2.5 h-4 w-4"
+          )}
+        />
         <textarea
           ref={inputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
           rows={1}
-          placeholder={
-            showHint
-              ? "Tell me what you spent or ask anything about your money…"
-              : "Type to Lucid…"
-          }
-          className="tabular flex-1 resize-none bg-transparent py-2.5 text-[14px] leading-snug text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
-          style={{ maxHeight: 140 }}
+          placeholder="Tell Lucid what happened or ask anything about your money…"
+          className={cn(
+            "tabular flex-1 resize-none bg-transparent leading-snug text-foreground placeholder:text-muted-foreground/65 focus:outline-none",
+            isHero ? "py-3.5 text-[15px]" : "py-2.5 text-[14px]"
+          )}
+          style={{ maxHeight: 160 }}
         />
         <button
           type="button"
           onClick={handleSend}
           disabled={!text.trim()}
           className={cn(
-            "mb-1 flex h-9 w-9 items-center justify-center rounded-xl transition-all",
+            "flex flex-shrink-0 items-center justify-center rounded-2xl transition-all",
+            isHero ? "mb-1 h-11 w-11" : "mb-1 h-9 w-9",
             text.trim()
-              ? "bg-primary text-primary-foreground shadow-[0_4px_16px_-4px_oklch(0.66_0.18_252/0.6)] hover:scale-[1.04]"
+              ? "bg-primary text-primary-foreground shadow-[0_4px_18px_-4px_oklch(0.66_0.18_252/0.7)] hover:scale-[1.04]"
               : "bg-surface-elevated text-muted-foreground"
           )}
           aria-label="Send"
         >
-          <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+          <ArrowUp className={cn(isHero ? "h-[18px] w-[18px]" : "h-4 w-4")} strokeWidth={2.5} />
         </button>
       </div>
     </div>
@@ -231,9 +246,8 @@ function formatBase(value: number, c: string): string {
 }
 
 /**
- * Compose a premium, 1–2 sentence assistant reply tailored to the action
- * the user just performed. Reads fresh store state so the second line can
- * reflect the new totals (e.g. "Food spend is now $84 today.").
+ * Compose a premium, 1–2 sentence assistant reply tailored to the action.
+ * Reads fresh store state so the second line reflects updated totals.
  */
 function composeReply(
   result: ReturnType<typeof parseMessage>,

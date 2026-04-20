@@ -282,10 +282,51 @@ export function useDailyInsight(): string {
   void tangible;
 }
 
+/** Pull a numeric amount from free text — first reasonable number wins. */
+function pickAmount(text: string): { amount: number; currency: "USD" | "EUR" | "GBP" | "AED" } | null {
+  const m = text.match(/(\d+(?:[.,]\d+)?)\s*(k|m)?/i);
+  if (!m) return null;
+  let n = parseFloat(m[1].replace(",", "."));
+  if (m[2]?.toLowerCase() === "k") n *= 1000;
+  if (m[2]?.toLowerCase() === "m") n *= 1_000_000;
+  let currency: "USD" | "EUR" | "GBP" | "AED" = "USD";
+  if (/€|eur|euro/i.test(text)) currency = "EUR";
+  else if (/£|gbp|pound/i.test(text)) currency = "GBP";
+  else if (/aed|dirham/i.test(text)) currency = "AED";
+  return { amount: n, currency };
+}
+
 export function answerQuestion(question: string): string {
   const q = question.toLowerCase();
   const state = useAppStore.getState();
   const base = state.baseCurrency;
+
+  // Decisive advice: "I make X/month, what's a good short-term goal?"
+  if (/(make|earn|income|salary).*(month|monthly|\/mo|per month)/.test(q) || /\b(make|earn)\s+[€$£]?\d/.test(q)) {
+    const picked = pickAmount(question);
+    if (picked) {
+      const monthly = picked.amount;
+      // Short-term: 2–3 months of income as savings target.
+      const lowGoal = Math.round((monthly * 1.7) / 100) * 100;
+      const highGoal = Math.round((monthly * 2.8) / 100) * 100;
+      const lowMonthly = Math.round((monthly * 0.15) / 10) * 10;
+      const highMonthly = Math.round((monthly * 0.23) / 10) * 10;
+      if (/short[- ]?term|short|near[- ]?term/.test(q) || /good.*goal/.test(q) || /goal/.test(q)) {
+        return `A solid short-term goal is ${fmtMoney(lowGoal, picked.currency)}–${fmtMoney(highGoal, picked.currency)} this year. That's about ${fmtMoney(lowMonthly, picked.currency)}–${fmtMoney(highMonthly, picked.currency)}/month depending on your expenses.`;
+      }
+      return `On ${fmtMoney(monthly, picked.currency)}/month, a healthy save rate is ${fmtMoney(lowMonthly, picked.currency)}–${fmtMoney(highMonthly, picked.currency)}/month. Want me to set that as a goal?`;
+    }
+  }
+
+  // "How much should I save?"
+  if (/how much.*(save|saving)/.test(q)) {
+    const picked = pickAmount(question);
+    if (picked) {
+      const monthly = Math.round((picked.amount * 0.2) / 10) * 10;
+      return `Aim to save about ${fmtMoney(monthly, picked.currency)}/month — roughly 20% of ${fmtMoney(picked.amount, picked.currency)}.`;
+    }
+    return `A reasonable target is 15–25% of monthly income. Tell me what you make and I'll size it precisely.`;
+  }
 
   if (/today/.test(q) && /(spent|spend|spending)/.test(q)) {
     const v = getSpendInRange(state, 1);

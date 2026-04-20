@@ -32,6 +32,7 @@ function HomePage() {
   const state = useAppStore();
   const base = state.baseCurrency;
   const insight = useDailyInsight();
+  const hasEngaged = state.messages.length > 0;
 
   const nw = getNetWorth(state);
   const today = getSpendInRange(state, 1);
@@ -79,25 +80,36 @@ function HomePage() {
         <p className="text-[13.5px] leading-snug text-foreground/90">{insight}</p>
       </div>
 
-      {/* AI Response — primary feedback surface */}
-      <div className="mt-4">
-        <AIResponse />
-      </div>
+      {/* Hero command bar — only before first interaction */}
+      {!hasEngaged && (
+        <div className="mt-5">
+          <ChatInput variant="hero" />
+        </div>
+      )}
+
+      {/* AI Response — primary feedback surface (after engagement) */}
+      {hasEngaged && (
+        <div className="mt-4">
+          <AIResponse />
+        </div>
+      )}
 
       {/* Activity feed — secondary system log */}
       <div className="mt-4">
         <ActivityFeed />
       </div>
 
-      {/* Sticky chat */}
-      <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-30 border-t border-border/40 bg-gradient-to-t from-background via-background/95 to-background/70 px-5 pb-3 pt-3 backdrop-blur-xl">
-        <div className="mx-auto max-w-2xl">
-          <ChatInput />
+      {/* Docked chat — only after engagement */}
+      {hasEngaged && (
+        <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-30 border-t border-border/40 bg-gradient-to-t from-background via-background/95 to-background/70 px-5 pb-3 pt-3 backdrop-blur-xl">
+          <div className="mx-auto max-w-2xl">
+            <ChatInput variant="docked" />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* spacer so feed doesn't sit under sticky input */}
-      <div className="h-44" />
+      {hasEngaged && <div className="h-44" />}
     </AppShell>
   );
 }
