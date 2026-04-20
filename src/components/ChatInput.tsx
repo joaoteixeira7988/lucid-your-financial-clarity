@@ -297,7 +297,10 @@ function composeReply(
       todayCat > 0
         ? `${cat} spend is now ${fmtMoney(todayCat, base)} today.`
         : `Today's spend: ${fmtMoney(today, base)}.`;
-    return `Logged ${fmtMoney(amt, base)} to ${cat}. ${second}`;
+    const head = e.categoryInferred
+      ? `Logged ${fmtMoney(amt, base)} to ${cat} (based on your usual pattern).`
+      : `Logged ${fmtMoney(amt, base)} to ${cat}.`;
+    return `${head} ${second}`;
   }
 
   if (result.intent === "income_log" && result.entries[0]?.amount != null) {
