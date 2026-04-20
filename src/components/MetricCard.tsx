@@ -1,9 +1,18 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import { useCountUp } from "@/lib/useCountUp";
+import { fmtMoney } from "@/lib/currency";
 
+/**
+ * Premium metric card.
+ * - When `animatedValue` is provided, the displayed number smoothly tweens
+ *   from its previous reading to the new one (ease-out, ~240ms).
+ * - Otherwise renders the static `value` string.
+ */
 export function MetricCard({
   label,
   value,
+  animatedValue,
   delta,
   hint,
   prominent,
@@ -12,12 +21,21 @@ export function MetricCard({
 }: {
   label: string;
   value: string;
+  animatedValue?: {
+    amount: number;
+    currency: "USD" | "EUR" | "GBP" | "AED";
+    compact?: boolean;
+  };
   delta?: { value: string; positive?: boolean };
   hint?: string;
   prominent?: boolean;
   children?: ReactNode;
   className?: string;
 }) {
+  const animated = useCountUp(animatedValue?.amount ?? 0);
+  const display = animatedValue
+    ? fmtMoney(animated, animatedValue.currency, { compact: animatedValue.compact })
+    : value;
   return (
     <div
       className={cn(
