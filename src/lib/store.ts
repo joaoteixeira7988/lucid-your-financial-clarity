@@ -191,6 +191,7 @@ export const useAppStore = create<State>()(
         return msg;
       },
       setCryptoPrices: (p) => set({ cryptoPrices: p, pricesLoadedAt: new Date().toISOString() }),
+      setLastAction: (a) => set({ lastAction: a }),
 
       resetAll: () =>
         set({
