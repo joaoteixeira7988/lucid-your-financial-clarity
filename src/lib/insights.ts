@@ -7,9 +7,10 @@ import {
   getCashTotal,
   getTangibleAssetValue,
   getRecentActivityKinds,
+  getTodayExpenseCount,
 } from "./store";
 import { fmtMoney } from "./currency";
-import type { ActivityKind } from "./types";
+import type { ActivityKind, TxCategory } from "./types";
 
 /**
  * Lucid insight engine.
