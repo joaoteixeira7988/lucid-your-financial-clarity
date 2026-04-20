@@ -132,7 +132,7 @@ export function Onboarding() {
     const target = 200;
     addGoal({
       title: "Weekly spending under $200",
-      type: "limit",
+      type: "spend_less",
       targetAmount: target,
       timeframe: "week",
       deadline: new Date(Date.now() + 7 * 86400000).toISOString(),
