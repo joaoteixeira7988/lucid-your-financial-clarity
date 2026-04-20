@@ -23,7 +23,17 @@ export type Transaction = {
   type: "expense" | "income";
 };
 
-export type AssetKind = "cash" | "savings" | "crypto" | "stock" | "other";
+export type AssetKind =
+  | "cash"
+  | "savings"
+  | "crypto"
+  | "stock"
+  | "vehicle"
+  | "property"
+  | "valuable" // watch, jewelry, art
+  | "electronics"
+  | "furniture"
+  | "other";
 
 export type Asset = {
   id: string;
@@ -32,7 +42,16 @@ export type Asset = {
   name: string;
   quantity?: number; // for crypto/stock
   value: number; // current value in base currency (cash/savings/other)
-  costBasis?: number; // optional
+  costBasis?: number; // optional purchase price
+  note?: string;
+  createdAt: string;
+};
+
+export type Liability = {
+  id: string;
+  name: string;
+  amount: number;
+  currency: Currency;
   createdAt: string;
 };
 
@@ -47,9 +66,19 @@ export type Goal = {
   createdAt: string;
 };
 
+export type ActivityKind =
+  | "expense"
+  | "income"
+  | "asset"
+  | "investment"
+  | "cash"
+  | "goal"
+  | "insight"
+  | "system";
+
 export type ActivityItem = {
   id: string;
-  kind: "log" | "asset" | "goal" | "insight" | "system";
+  kind: ActivityKind;
   text: string;
   date: string;
 };
@@ -69,6 +98,7 @@ export type Intent =
   | "question"
   | "goal_create"
   | "correction"
+  | "clarify"
   | "unknown";
 
 export type ParsedEntry = {
@@ -90,4 +120,6 @@ export type ParsedResult = {
   question?: string;
   confidence: number;
   reply: string;
+  /** When intent is `clarify`, this is the candidate intent we'd otherwise use. */
+  suggestedIntent?: Intent;
 };

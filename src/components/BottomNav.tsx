@@ -1,11 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, PieChart, TrendingUp, Wallet, Sparkles } from "lucide-react";
+import { Home, PieChart, Briefcase, Wallet, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
   { to: "/spending", label: "Spending", icon: PieChart },
-  { to: "/investments", label: "Invest", icon: TrendingUp },
+  { to: "/portfolio", label: "Portfolio", icon: Briefcase },
   { to: "/net-worth", label: "Net Worth", icon: Wallet },
   { to: "/insights", label: "Insights", icon: Sparkles },
 ] as const;
@@ -19,13 +19,18 @@ export function BottomNav() {
     >
       <div className="mx-auto flex max-w-2xl items-center justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-2">
         {tabs.map(({ to, label, icon: Icon }) => {
-          const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+          const active =
+            to === "/"
+              ? pathname === "/"
+              : pathname.startsWith(to) ||
+                // Treat legacy /investments as Portfolio active
+                (to === "/portfolio" && pathname.startsWith("/investments"));
           return (
             <Link
               key={to}
               to={to}
               className={cn(
-                "group flex min-w-[60px] flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors",
+                "group flex min-w-[58px] flex-col items-center gap-1 rounded-xl px-2.5 py-2 transition-colors",
                 active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >

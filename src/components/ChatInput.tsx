@@ -11,6 +11,7 @@ const QUICK_ACTIONS: { label: string; prefill: string }[] = [
   { label: "Food", prefill: "Spent  on food" },
   { label: "Transport", prefill: "Spent  on Uber" },
   { label: "Shopping", prefill: "Spent  on shopping" },
+  { label: "Add asset", prefill: "Bought a watch for " },
   { label: "Add investment", prefill: "Add 0.1 ETH" },
   { label: "Set goal", prefill: "I want to save 5000 in 3 months" },
 ];
@@ -23,10 +24,10 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
   const addMessage = useAppStore((s) => s.addMessage);
   const addTransaction = useAppStore((s) => s.addTransaction);
   const addAsset = useAppStore((s) => s.addAsset);
+  const adjustCash = useAppStore((s) => s.adjustCash);
   const addGoal = useAppStore((s) => s.addGoal);
   const addActivity = useAppStore((s) => s.addActivity);
 
-  // auto-grow textarea
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -40,7 +41,6 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
       const el = inputRef.current;
       if (!el) return;
       el.focus();
-      // place caret at the gap
       const idx = prefill.indexOf("  ");
       if (idx >= 0) el.setSelectionRange(idx + 1, idx + 1);
     });
@@ -53,7 +53,7 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
 
     const result = parseMessage(value, baseCurrency);
 
-    if (result.intent === "expense_log" || result.intent === "income_log") {
+    if (result.intent === "expense_log") {
       result.entries.forEach((e) => {
         if (e.amount == null) return;
         addTransaction({
@@ -62,29 +62,75 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
           category: (e.category ?? "Other") as TxCategory,
           merchant: e.merchant,
           date: e.date ?? new Date().toISOString(),
-          type: result.intent === "income_log" ? "income" : "expense",
+          type: "expense",
         });
         const baseAmt = toBase(e.amount, e.currency ?? baseCurrency, baseCurrency);
+        adjustCash(-baseAmt);
         addActivity(
-          "log",
-          `Logged ${formatBase(baseAmt, baseCurrency)} to ${e.category ?? "Other"}.`
+          "expense",
+          `Logged expense: ${e.category ?? "Other"} (${formatBase(baseAmt, baseCurrency)}).`
         );
       });
-    } else if (result.intent === "investment_log" || result.intent === "asset_log") {
+    } else if (result.intent === "income_log") {
+      result.entries.forEach((e) => {
+        if (e.amount == null) return;
+        addTransaction({
+          amount: e.amount,
+          currency: e.currency ?? baseCurrency,
+          category: "Income",
+          merchant: e.merchant,
+          date: e.date ?? new Date().toISOString(),
+          type: "income",
+        });
+        const baseAmt = toBase(e.amount, e.currency ?? baseCurrency, baseCurrency);
+        adjustCash(baseAmt);
+        addActivity("income", `Income: ${formatBase(baseAmt, baseCurrency)}.`);
+      });
+    } else if (result.intent === "investment_log") {
       result.entries.forEach((e) => {
         addAsset({
-          kind: e.assetKind ?? "other",
+          kind: e.assetKind ?? "stock",
           symbol: e.symbol,
-          name: e.assetName ?? "Asset",
+          name: e.assetName ?? "Investment",
           quantity: e.quantity,
           value: e.amount ?? 0,
+          costBasis: e.amount,
         });
-        addActivity(
-          "asset",
+        const label =
           e.quantity != null && e.symbol
-            ? `Added ${e.quantity} ${e.symbol}.`
-            : `Added ${formatBase(toBase(e.amount ?? 0, e.currency ?? baseCurrency, baseCurrency), baseCurrency)} ${e.assetName ?? "asset"}.`
-        );
+            ? `Added investment: ${e.quantity} ${e.symbol}.`
+            : `Added investment: ${e.symbol ?? e.assetName ?? "Investment"} (${formatBase(toBase(e.amount ?? 0, e.currency ?? baseCurrency, baseCurrency), baseCurrency)}).`;
+        // Investments funded with cash → debit cash if amount given.
+        if (e.amount != null) {
+          const baseAmt = toBase(e.amount, e.currency ?? baseCurrency, baseCurrency);
+          adjustCash(-baseAmt);
+        }
+        addActivity("investment", label);
+      });
+    } else if (result.intent === "asset_log") {
+      result.entries.forEach((e) => {
+        const baseAmt = toBase(e.amount ?? 0, e.currency ?? baseCurrency, baseCurrency);
+        // Cash/savings adjustments don't create a new asset row.
+        if (e.assetKind === "cash" || e.assetKind === "savings") {
+          adjustCash(baseAmt);
+          addActivity(
+            "cash",
+            `Cash balance updated (+${formatBase(baseAmt, baseCurrency)}).`
+          );
+        } else {
+          addAsset({
+            kind: e.assetKind ?? "other",
+            name: e.assetName ?? "Asset",
+            value: baseAmt,
+            costBasis: baseAmt,
+          });
+          // Tangible asset purchase: cash leaves, asset value enters → net worth ~neutral
+          adjustCash(-baseAmt);
+          addActivity(
+            "asset",
+            `Added asset: ${e.assetName ?? "Asset"} (${formatBase(baseAmt, baseCurrency)}).`
+          );
+        }
       });
     } else if (result.intent === "goal_create" && result.goal && result.goal.title) {
       addGoal({
@@ -97,6 +143,7 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
       });
       addActivity("goal", `Goal created: ${result.goal.title}.`);
     }
+    // intent === "clarify" → just shows the question reply, no save.
 
     let reply = result.reply;
     if (result.intent === "question") reply = answerQuestion(value);
