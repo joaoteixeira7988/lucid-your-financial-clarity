@@ -39,6 +39,7 @@ export function ChatInput({
   compact?: boolean;
 }) {
   const [text, setText] = useState("");
+  const [pulsing, setPulsing] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const baseCurrency = useAppStore((s) => s.baseCurrency);
   const addMessage = useAppStore((s) => s.addMessage);
@@ -70,6 +71,9 @@ export function ChatInput({
   function handleSend() {
     const value = text.trim();
     if (!value) return;
+    playSound("send");
+    setPulsing(true);
+    setTimeout(() => setPulsing(false), 160);
     addMessage({ role: "user", content: value });
 
     const result = parseMessage(value, baseCurrency);
