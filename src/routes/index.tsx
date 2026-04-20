@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { MetricCard } from "@/components/MetricCard";
 import { ChatInput } from "@/components/ChatInput";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { AIResponse } from "@/components/AIResponse";
 import { useAppStore, getNetWorth, getInvestmentValue, getSpendInRange } from "@/lib/store";
 import { useDailyInsight } from "@/lib/insights";
 import { fmtMoney } from "@/lib/currency";
@@ -78,7 +79,12 @@ function HomePage() {
         <p className="text-[13.5px] leading-snug text-foreground/90">{insight}</p>
       </div>
 
-      {/* Activity feed */}
+      {/* AI Response — primary feedback surface */}
+      <div className="mt-4">
+        <AIResponse />
+      </div>
+
+      {/* Activity feed — secondary system log */}
       <div className="mt-4">
         <ActivityFeed />
       </div>
