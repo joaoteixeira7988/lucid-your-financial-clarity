@@ -376,3 +376,150 @@ export function answerQuestion(question: string): string {
   }
   return `Try asking about today, this week, your net worth, cash, investments, or your top category.`;
 }
+
+// ============================================================================
+// Proactive intelligence — quiet observations triggered by real behavior.
+// Returns at most one nudge. Caller decides when/where to surface it.
+// ============================================================================
+
+export type ProactiveNudge = {
+  id: string;
+  text: string;
+  kind: "spike" | "burst" | "education" | "pattern" | "checkin";
+};
+
+const NUDGE_DISMISS_KEY = "lucid-nudge-dismissed-v1";
+const CHECKIN_KEY = "lucid-checkin-shown-v1";
+
+function dismissedSet(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(NUDGE_DISMISS_KEY);
+    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function dismissNudge(id: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = dismissedSet();
+    cur.add(id);
+    window.localStorage.setItem(NUDGE_DISMISS_KEY, JSON.stringify([...cur]));
+  } catch {
+    /* ignore */
+  }
+}
+
+function weekIsoTag(d = new Date()): string {
+  // ISO-week-ish tag, good enough for a once-per-week trigger
+  const onejan = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d.getTime() - onejan.getTime()) / 86400000 + onejan.getDay() + 1) / 7);
+  return `${d.getFullYear()}-W${week}`;
+}
+
+function checkinShownThisWeek(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return window.localStorage.getItem(CHECKIN_KEY) === weekIsoTag();
+  } catch {
+    return true;
+  }
+}
+
+export function markCheckinShown(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CHECKIN_KEY, weekIsoTag());
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Per-day spend for a category over the past `days` days (in base currency). */
+function categoryDailyAverage(
+  state: ReturnType<typeof useAppStore.getState>,
+  category: TxCategory,
+  days: number
+): number {
+  const cutoff = Date.now() - days * 86400000;
+  let total = 0;
+  for (const tx of state.transactions) {
+    if (tx.type !== "expense" || tx.category !== category) continue;
+    if (new Date(tx.date).getTime() < cutoff) continue;
+    total += tx.amount; // close enough — base-currency conversion not critical here
+  }
+  return total / days;
+}
+
+/**
+ * Quiet, behavior-driven nudge. Returns null when nothing useful to say.
+ *
+ * Priority order:
+ *   1. Weekly soft check-in (once a week, after enough activity)
+ *   2. Category spike — a category running well above its 30-day average
+ *   3. Small-expense burst — many tiny expenses today
+ *   4. Education — top category persistence or daily-add-up math
+ */
+export function getProactiveNudge(): ProactiveNudge | null {
+  const state = useAppStore.getState();
+  if (state.transactions.length < 4) return null;
+  const dismissed = dismissedSet();
+
+  // --- 1. Weekly soft check-in ---
+  if (!checkinShownThisWeek() && state.transactions.length >= 6) {
+    const week = getSpendInRange(state, 7);
+    if (week > 0) {
+      return {
+        id: `checkin-${weekIsoTag()}`,
+        kind: "checkin",
+        text: `This week you logged ${fmtMoney(week, state.baseCurrency)} in spending. Does that look right?`,
+      };
+    }
+  }
+
+  // --- 2. Category spike: this week vs trailing 30-day daily average × 7 ---
+  const weekCats = getCategorySpend(state, 7).filter((c) => c.category !== "Income");
+  for (const { category, amount } of weekCats.slice(0, 3)) {
+    const id = `spike-${category}-${weekIsoTag()}`;
+    if (dismissed.has(id)) continue;
+    const avg = categoryDailyAverage(state, category, 30) * 7;
+    if (avg > 0 && amount > avg * 1.4 && amount > 30) {
+      return {
+        id,
+        kind: "spike",
+        text: `Your ${category} spending is higher than usual this week.`,
+      };
+    }
+  }
+
+  // --- 3. Small-expense burst today ---
+  const todayCount = getTodayExpenseCount(state);
+  if (todayCount >= 4) {
+    const id = `burst-${new Date().toISOString().slice(0, 10)}`;
+    if (!dismissed.has(id)) {
+      return {
+        id,
+        kind: "burst",
+        text: `You've added ${todayCount} small expenses today — above your normal pace.`,
+      };
+    }
+  }
+
+  // --- 4. Education — only when there's a clearly dominant category ---
+  if (weekCats[0] && weekCats.length > 1) {
+    const [top, second] = weekCats;
+    const id = `pattern-${top.category}-${weekIsoTag()}`;
+    if (!dismissed.has(id) && top.amount > second.amount * 1.5 && top.amount > 60) {
+      const monthly = Math.round((top.amount / 7) * 30);
+      return {
+        id,
+        kind: "education",
+        text: `${top.category} is your top expense again — at this pace, about ${fmtMoney(monthly, state.baseCurrency)}/month.`,
+      };
+    }
+  }
+
+  return null;
+}
