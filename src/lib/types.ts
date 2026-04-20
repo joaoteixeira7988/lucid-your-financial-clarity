@@ -12,6 +12,9 @@ export type TxCategory =
   | "Income"
   | "Other";
 
+/** Where the entry came from. Future: receipts, bank sync, CSV import. */
+export type EntrySource = "text" | "quick" | "receipt" | "bank" | "import";
+
 export type Transaction = {
   id: string;
   amount: number; // in base currency
@@ -21,6 +24,9 @@ export type Transaction = {
   note?: string;
   date: string; // ISO
   type: "expense" | "income";
+  source?: EntrySource;
+  /** Confidence the parser had when classifying. 0–1. */
+  confidence?: number;
 };
 
 export type AssetKind =
@@ -111,6 +117,9 @@ export type ParsedEntry = {
   quantity?: number;
   assetKind?: AssetKind;
   assetName?: string;
+  /** True when category was inferred from past behavior, not text. */
+  categoryInferred?: boolean;
+  source?: EntrySource;
 };
 
 export type ParsedResult = {

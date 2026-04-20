@@ -46,6 +46,7 @@ export function ChatInput({
   const adjustCash = useAppStore((s) => s.adjustCash);
   const addGoal = useAppStore((s) => s.addGoal);
   const addActivity = useAppStore((s) => s.addActivity);
+  const setLastAction = useAppStore((s) => s.setLastAction);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -73,16 +74,26 @@ export function ChatInput({
     const result = parseMessage(value, baseCurrency);
 
     if (result.intent === "expense_log") {
-      result.entries.forEach((e) => {
+      let firstTxId: string | undefined;
+      let firstCat: TxCategory | undefined;
+      let inferred = false;
+      result.entries.forEach((e, i) => {
         if (e.amount == null) return;
-        addTransaction({
+        const tx = addTransaction({
           amount: e.amount,
           currency: e.currency ?? baseCurrency,
           category: (e.category ?? "Other") as TxCategory,
           merchant: e.merchant,
           date: e.date ?? new Date().toISOString(),
           type: "expense",
+          source: "text",
+          confidence: result.confidence,
         });
+        if (i === 0) {
+          firstTxId = tx.id;
+          firstCat = (e.category ?? "Other") as TxCategory;
+          inferred = !!e.categoryInferred;
+        }
         const baseAmt = toBase(e.amount, e.currency ?? baseCurrency, baseCurrency);
         adjustCash(-baseAmt);
         addActivity(
@@ -90,7 +101,16 @@ export function ChatInput({
           `Logged expense: ${e.category ?? "Other"} (${formatBase(baseAmt, baseCurrency)}).`
         );
       });
+      setLastAction({
+        kind: "expense",
+        transactionId: firstTxId,
+        category: firstCat,
+        inferred,
+        confidence: result.confidence,
+        at: new Date().toISOString(),
+      });
     } else if (result.intent === "income_log") {
+      setLastAction({ kind: "income", at: new Date().toISOString() });
       result.entries.forEach((e) => {
         if (e.amount == null) return;
         addTransaction({
@@ -106,6 +126,7 @@ export function ChatInput({
         addActivity("income", `Income: ${formatBase(baseAmt, baseCurrency)}.`);
       });
     } else if (result.intent === "investment_log") {
+      setLastAction({ kind: "investment", at: new Date().toISOString() });
       result.entries.forEach((e) => {
         addAsset({
           kind: e.assetKind ?? "stock",
@@ -126,6 +147,7 @@ export function ChatInput({
         addActivity("investment", label);
       });
     } else if (result.intent === "asset_log") {
+      setLastAction({ kind: "asset", at: new Date().toISOString() });
       result.entries.forEach((e) => {
         const baseAmt = toBase(e.amount ?? 0, e.currency ?? baseCurrency, baseCurrency);
         if (e.assetKind === "cash" || e.assetKind === "savings") {
@@ -158,6 +180,9 @@ export function ChatInput({
         deadline: result.goal.deadline ?? new Date().toISOString(),
       });
       addActivity("goal", `Goal created: ${result.goal.title}.`);
+      setLastAction({ kind: "goal", at: new Date().toISOString() });
+    } else {
+      setLastAction({ kind: "other", at: new Date().toISOString() });
     }
 
     const reply = composeReply(result, value, baseCurrency);
@@ -272,7 +297,10 @@ function composeReply(
       todayCat > 0
         ? `${cat} spend is now ${fmtMoney(todayCat, base)} today.`
         : `Today's spend: ${fmtMoney(today, base)}.`;
-    return `Logged ${fmtMoney(amt, base)} to ${cat}. ${second}`;
+    const head = e.categoryInferred
+      ? `Logged ${fmtMoney(amt, base)} to ${cat} (based on your usual pattern).`
+      : `Logged ${fmtMoney(amt, base)} to ${cat}.`;
+    return `${head} ${second}`;
   }
 
   if (result.intent === "income_log" && result.entries[0]?.amount != null) {

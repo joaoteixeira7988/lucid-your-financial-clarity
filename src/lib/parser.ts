@@ -6,6 +6,7 @@ import type {
   ParsedEntry,
   AssetKind,
 } from "./types";
+import { useAppStore, inferCategoryFromHistory } from "./store";
 
 /**
  * Lucid intent parser.
@@ -222,13 +223,23 @@ export function parseMessage(text: string, baseCurrency: Currency): ParsedResult
       };
     }
 
-    const category = intent === "income_log" ? "Income" : detectCategory(text);
+    let category: TxCategory =
+      intent === "income_log" ? "Income" : detectCategory(text);
+    let categoryInferred = false;
+    if (intent === "expense_log" && category === "Other") {
+      const inferred = inferCategoryFromHistory(useAppStore.getState(), text);
+      if (inferred) {
+        category = inferred.category;
+        categoryInferred = true;
+      }
+    }
     const entries: ParsedEntry[] = amounts.map((amount) => ({
       amount,
       currency,
       category,
       date,
       merchant: extractMerchant(text, category),
+      categoryInferred,
     }));
     const total = amounts.reduce((s, n) => s + n, 0);
     const reply =
@@ -237,7 +248,7 @@ export function parseMessage(text: string, baseCurrency: Currency): ParsedResult
         : entries.length === 1
           ? `Logged expense: ${currencySymbol(currency)}${formatNum(total)} · ${category}.`
           : `Logged ${entries.length} expenses totaling ${currencySymbol(currency)}${formatNum(total)}.`;
-    return { intent, entries, confidence: 0.9, reply };
+    return { intent, entries, confidence: categoryInferred ? 0.8 : 0.9, reply };
   }
 
   if (intent === "investment_log") {

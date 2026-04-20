@@ -26,11 +26,21 @@ type State = {
   cryptoPrices: Record<string, number>; // symbol -> USD price
   pricesLoadedAt?: string;
   onboardingComplete: boolean;
+  /** The most recent action — powers inline correction on the AI response. */
+  lastAction?: {
+    kind: "expense" | "income" | "asset" | "investment" | "goal" | "other";
+    transactionId?: string;
+    category?: TxCategory;
+    inferred?: boolean;
+    confidence?: number;
+    at: string;
+  };
 
   // setters
   setBaseCurrency: (c: Currency) => void;
   completeOnboarding: () => void;
   addTransaction: (t: Omit<Transaction, "id">) => Transaction;
+  updateTransaction: (id: string, patch: Partial<Transaction>) => void;
   addAsset: (a: Omit<Asset, "id" | "createdAt">) => Asset;
   /** Adjust the value of the first cash asset, or create one. Returns new cash total in base. */
   adjustCash: (deltaInBase: number) => number;
@@ -38,6 +48,7 @@ type State = {
   addGoal: (g: Omit<Goal, "id" | "createdAt">) => Goal;
   addActivity: (kind: ActivityKind, text: string) => void;
   addMessage: (m: Omit<ChatMessage, "id" | "date">) => ChatMessage;
+  setLastAction: (a: State["lastAction"]) => void;
   setCryptoPrices: (p: Record<string, number>) => void;
   resetAll: () => void;
   seedDemo: () => void;
@@ -129,6 +140,11 @@ export const useAppStore = create<State>()(
         set((s) => ({ transactions: [tx, ...s.transactions] }));
         return tx;
       },
+      updateTransaction: (id, patch) => {
+        set((s) => ({
+          transactions: s.transactions.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        }));
+      },
       addAsset: (a) => {
         const asset: Asset = { ...a, id: uid(), createdAt: new Date().toISOString() };
         set((s) => ({ assets: [asset, ...s.assets] }));
@@ -175,6 +191,7 @@ export const useAppStore = create<State>()(
         return msg;
       },
       setCryptoPrices: (p) => set({ cryptoPrices: p, pricesLoadedAt: new Date().toISOString() }),
+      setLastAction: (a) => set({ lastAction: a }),
 
       resetAll: () =>
         set({
@@ -286,4 +303,40 @@ export function getCategorySpend(state: State, days: number): { category: TxCate
 
 export function getRecentActivityKinds(state: State, count = 5): ActivityKind[] {
   return state.activity.slice(0, count).map((a) => a.kind);
+}
+
+/**
+ * Look up the most-used category for a given keyword from past transactions.
+ * Powers context-aware logging — e.g. bare "coffee" → Food because the user
+ * has consistently classified coffee as Food before.
+ */
+export function inferCategoryFromHistory(
+  state: State,
+  text: string
+): { category: TxCategory; matches: number } | null {
+  const lower = text.toLowerCase().trim();
+  if (!lower) return null;
+  const tally = new Map<TxCategory, number>();
+  for (const tx of state.transactions) {
+    if (tx.type !== "expense") continue;
+    const hay = `${tx.merchant ?? ""} ${tx.note ?? ""}`.toLowerCase().trim();
+    if (!hay) continue;
+    if (hay.includes(lower) || lower.includes(hay)) {
+      tally.set(tx.category, (tally.get(tx.category) ?? 0) + 1);
+    }
+  }
+  let best: { category: TxCategory; matches: number } | null = null;
+  for (const [cat, count] of tally) {
+    if (!best || count > best.matches) best = { category: cat, matches: count };
+  }
+  if (!best || best.matches < 2) return null;
+  return best;
+}
+
+/** Today's expense count — used to detect small-expense bursts. */
+export function getTodayExpenseCount(state: State): number {
+  const cutoff = Date.now() - 86400000;
+  return state.transactions.filter(
+    (t) => t.type === "expense" && new Date(t.date).getTime() >= cutoff
+  ).length;
 }
