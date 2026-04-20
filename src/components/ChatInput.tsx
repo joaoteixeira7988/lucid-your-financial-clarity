@@ -151,8 +151,8 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
     }
     // intent === "clarify" → just shows the question reply, no save.
 
-    let reply = result.reply;
-    if (result.intent === "question") reply = answerQuestion(value);
+    // Build a premium, scenario-aware reply (1–2 short sentences).
+    const reply = composeReply(result, value, baseCurrency);
 
     setTimeout(() => {
       addMessage({ role: "assistant", content: reply });
