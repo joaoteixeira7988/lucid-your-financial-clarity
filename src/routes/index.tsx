@@ -54,14 +54,21 @@ function HomePage() {
           prominent
           label="Net worth"
           value={fmtMoney(nw, base, { compact: true })}
+          animatedValue={{ amount: nw, currency: base, compact: true }}
           delta={{ value: "+3.1%", positive: true }}
           hint="this month"
         />
         <div className="grid grid-cols-2 gap-3">
-          <MetricCard label="Today" value={fmtMoney(today, base)} hint="spending" />
+          <MetricCard
+            label="Today"
+            value={fmtMoney(today, base)}
+            animatedValue={{ amount: today, currency: base }}
+            hint="spending"
+          />
           <MetricCard
             label="This week"
             value={fmtMoney(week, base)}
+            animatedValue={{ amount: week, currency: base }}
             delta={
               prevWeek > 0
                 ? { value: `${weekDelta >= 0 ? "+" : ""}${weekDelta.toFixed(0)}%`, positive: weekDelta < 0 }
@@ -73,6 +80,7 @@ function HomePage() {
         <MetricCard
           label="Investments"
           value={fmtMoney(invest, base, { compact: true })}
+          animatedValue={{ amount: invest, currency: base, compact: true }}
           hint={`${state.assets.filter((a) => a.kind === "crypto").length} crypto, ${state.assets.filter((a) => a.kind === "stock").length} stock`}
         />
       </div>
