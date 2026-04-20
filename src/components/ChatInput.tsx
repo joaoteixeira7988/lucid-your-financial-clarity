@@ -12,6 +12,7 @@ import { answerQuestion } from "@/lib/insights";
 import type { TxCategory } from "@/lib/types";
 import { toBase, fmtMoney } from "@/lib/currency";
 import { cn } from "@/lib/utils";
+import { playSound } from "@/lib/sound";
 
 const QUICK_ACTIONS: { label: string; prefill: string }[] = [
   { label: "Food", prefill: "Spent  on lunch" },
@@ -38,6 +39,7 @@ export function ChatInput({
   compact?: boolean;
 }) {
   const [text, setText] = useState("");
+  const [pulsing, setPulsing] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const baseCurrency = useAppStore((s) => s.baseCurrency);
   const addMessage = useAppStore((s) => s.addMessage);
@@ -69,6 +71,9 @@ export function ChatInput({
   function handleSend() {
     const value = text.trim();
     if (!value) return;
+    playSound("send");
+    setPulsing(true);
+    setTimeout(() => setPulsing(false), 160);
     addMessage({ role: "user", content: value });
 
     const result = parseMessage(value, baseCurrency);
@@ -185,6 +190,15 @@ export function ChatInput({
       setLastAction({ kind: "other", at: new Date().toISOString() });
     }
 
+    // Soft confirm tone for any committed action (skip pure questions/clarify)
+    if (
+      result.intent !== "question" &&
+      result.intent !== "clarify" &&
+      result.intent !== "unknown"
+    ) {
+      setTimeout(() => playSound("confirm"), 180);
+    }
+
     const reply = composeReply(result, value, baseCurrency);
     setTimeout(() => {
       addMessage({ role: "assistant", content: reply });
@@ -210,8 +224,11 @@ export function ChatInput({
             <button
               key={q.label}
               type="button"
-              onClick={() => handleQuick(q.prefill)}
-              className="lucid-chip flex-shrink-0 whitespace-nowrap"
+              onClick={() => {
+                playSound("tap");
+                handleQuick(q.prefill);
+              }}
+              className="lucid-chip lucid-press flex-shrink-0 whitespace-nowrap"
             >
               {q.label}
             </button>
@@ -220,11 +237,12 @@ export function ChatInput({
       )}
       <div
         className={cn(
-          "lucid-card relative flex items-end gap-2 transition-all",
+          "lucid-card relative flex items-end gap-2 transition-all duration-200",
           isHero
             ? "rounded-[28px] p-2.5 pl-5 shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.22),0_18px_50px_-18px_oklch(0.66_0.18_252/0.55)]"
             : "rounded-3xl p-2 pl-4",
-          "focus-within:shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.5),0_12px_36px_-12px_oklch(0.66_0.18_252/0.55)]"
+          "focus-within:shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.5),0_12px_36px_-12px_oklch(0.66_0.18_252/0.55)]",
+          pulsing && "scale-[0.992] opacity-90"
         )}
       >
         <Sparkles
@@ -251,10 +269,10 @@ export function ChatInput({
           onClick={handleSend}
           disabled={!text.trim()}
           className={cn(
-            "flex flex-shrink-0 items-center justify-center rounded-2xl transition-all",
+            "lucid-press flex flex-shrink-0 items-center justify-center rounded-2xl transition-[background,box-shadow,transform] duration-200",
             isHero ? "mb-1 h-11 w-11" : "mb-1 h-9 w-9",
             text.trim()
-              ? "bg-primary text-primary-foreground shadow-[0_4px_18px_-4px_oklch(0.66_0.18_252/0.7)] hover:scale-[1.04]"
+              ? "bg-primary text-primary-foreground shadow-[0_4px_18px_-4px_oklch(0.66_0.18_252/0.7)]"
               : "bg-surface-elevated text-muted-foreground"
           )}
           aria-label="Send"

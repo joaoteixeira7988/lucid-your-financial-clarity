@@ -177,6 +177,37 @@ html {
   }
 }
 
+/* ---------- Lucid motion system ----------
+   Short, ease-out, never bouncy. All <260ms. */
+@keyframes lucid-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lucid-rise-sm {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lucid-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.lucid-rise { animation: lucid-rise 200ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lucid-rise-sm { animation: lucid-rise-sm 180ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lucid-fade { animation: lucid-fade 200ms ease-out both; }
+
+/* Press feedback — applied to interactive controls */
+.lucid-press { transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1); }
+.lucid-press:active { transform: scale(0.97); }
+
+/* Card hover lift — extremely subtle */
+.lucid-card { transition: box-shadow 200ms ease-out, border-color 200ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lucid-rise, .lucid-rise-sm, .lucid-fade { animation: none !important; }
+  .lucid-press { transition: none !important; }
+}
+
 /* Subtle scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

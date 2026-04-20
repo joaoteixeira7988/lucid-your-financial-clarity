@@ -146,9 +146,10 @@ export function AIResponse() {
           <Sparkles className="h-4 w-4" />
         </span>
         <div
+          key={shown.id}
           className={cn(
             "min-w-0 flex-1 pt-0.5 transition-opacity duration-150",
-            fading ? "opacity-0" : "opacity-100"
+            fading ? "opacity-0" : "lucid-rise opacity-100"
           )}
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
