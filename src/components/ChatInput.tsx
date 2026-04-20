@@ -177,6 +177,13 @@ export function ChatInput({
         deadline: result.goal.deadline ?? new Date().toISOString(),
       });
       addActivity("goal", `Goal created: ${result.goal.title}.`);
+      setLastAction({ kind: "goal", at: new Date().toISOString() });
+    } else {
+      // Clear inline-correction context for non-expense interactions.
+      if (result.intent === "income_log") setLastAction({ kind: "income", at: new Date().toISOString() });
+      else if (result.intent === "investment_log") setLastAction({ kind: "investment", at: new Date().toISOString() });
+      else if (result.intent === "asset_log") setLastAction({ kind: "asset", at: new Date().toISOString() });
+      else setLastAction({ kind: "other", at: new Date().toISOString() });
     }
 
     const reply = composeReply(result, value, baseCurrency);
