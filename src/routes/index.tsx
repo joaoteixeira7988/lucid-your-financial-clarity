@@ -46,6 +46,7 @@ function HomePage() {
 
   return (
     <AppShell subtitle="Good to see you">
+      {!onboardingComplete && <Onboarding />}
       <h1 className="sr-only">Lucid — Home</h1>
       {/* Hero metric */}
       <div className="grid gap-3">
