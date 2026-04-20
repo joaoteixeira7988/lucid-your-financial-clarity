@@ -1,19 +1,34 @@
 import { useAppStore } from "@/lib/store";
-import { CheckCircle2, Coins, Sparkles, Target, TrendingUp } from "lucide-react";
+import {
+  CheckCircle2,
+  Coins,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Wallet,
+  ArrowDownRight,
+  ArrowUpRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ActivityItem } from "@/lib/types";
 
 const ICONS: Record<ActivityItem["kind"], React.ComponentType<{ className?: string }>> = {
-  log: CheckCircle2,
+  expense: ArrowDownRight,
+  income: ArrowUpRight,
   asset: Coins,
+  investment: TrendingUp,
+  cash: Wallet,
   goal: Target,
-  insight: TrendingUp,
-  system: Sparkles,
+  insight: Sparkles,
+  system: CheckCircle2,
 };
 
 const COLORS: Record<ActivityItem["kind"], string> = {
-  log: "text-success bg-success/10",
-  asset: "text-chart-3 bg-chart-3/10",
+  expense: "text-destructive bg-destructive/12",
+  income: "text-success bg-success/12",
+  asset: "text-chart-3 bg-chart-3/12",
+  investment: "text-chart-4 bg-chart-4/12",
+  cash: "text-chart-2 bg-chart-2/12",
   goal: "text-chart-4 bg-chart-4/10",
   insight: "text-primary bg-primary/12",
   system: "text-muted-foreground bg-muted/40",
@@ -34,7 +49,6 @@ export function ActivityFeed() {
   const activity = useAppStore((s) => s.activity);
   const messages = useAppStore((s) => s.messages);
 
-  // Interleave latest assistant replies with activity
   const items: { kind: ActivityItem["kind"] | "chat"; text: string; date: string; id: string }[] = [
     ...messages
       .filter((m) => m.role === "assistant")
