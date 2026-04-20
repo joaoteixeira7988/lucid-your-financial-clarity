@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Sparkles } from "lucide-react";
-import { useAppStore } from "@/lib/store";
+import {
+  useAppStore,
+  getCategorySpend,
+  getInvestmentValue,
+  getNetWorth,
+  getSpendInRange,
+} from "@/lib/store";
 import { parseMessage } from "@/lib/parser";
 import { answerQuestion } from "@/lib/insights";
 import type { TxCategory } from "@/lib/types";
-import { toBase } from "@/lib/currency";
+import { toBase, fmtMoney } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 const QUICK_ACTIONS: { label: string; prefill: string }[] = [
