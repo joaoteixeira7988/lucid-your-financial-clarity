@@ -119,8 +119,10 @@ export const useAppStore = create<State>()(
       activity: [],
       messages: [],
       cryptoPrices: {},
+      onboardingComplete: false,
 
       setBaseCurrency: (c) => set({ baseCurrency: c }),
+      completeOnboarding: () => set({ onboardingComplete: true }),
 
       addTransaction: (t) => {
         const tx: Transaction = { ...t, id: uid() };
