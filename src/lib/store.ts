@@ -31,6 +31,7 @@ type State = {
   setBaseCurrency: (c: Currency) => void;
   completeOnboarding: () => void;
   addTransaction: (t: Omit<Transaction, "id">) => Transaction;
+  updateTransaction: (id: string, patch: Partial<Transaction>) => void;
   addAsset: (a: Omit<Asset, "id" | "createdAt">) => Asset;
   /** Adjust the value of the first cash asset, or create one. Returns new cash total in base. */
   adjustCash: (deltaInBase: number) => number;
@@ -128,6 +129,11 @@ export const useAppStore = create<State>()(
         const tx: Transaction = { ...t, id: uid() };
         set((s) => ({ transactions: [tx, ...s.transactions] }));
         return tx;
+      },
+      updateTransaction: (id, patch) => {
+        set((s) => ({
+          transactions: s.transactions.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        }));
       },
       addAsset: (a) => {
         const asset: Asset = { ...a, id: uid(), createdAt: new Date().toISOString() };
