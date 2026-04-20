@@ -6,6 +6,7 @@ import type {
   ParsedEntry,
   AssetKind,
 } from "./types";
+import { useAppStore, inferCategoryFromHistory } from "./store";
 
 /**
  * Lucid intent parser.
