@@ -25,9 +25,11 @@ type State = {
   messages: ChatMessage[];
   cryptoPrices: Record<string, number>; // symbol -> USD price
   pricesLoadedAt?: string;
+  onboardingComplete: boolean;
 
   // setters
   setBaseCurrency: (c: Currency) => void;
+  completeOnboarding: () => void;
   addTransaction: (t: Omit<Transaction, "id">) => Transaction;
   addAsset: (a: Omit<Asset, "id" | "createdAt">) => Asset;
   /** Adjust the value of the first cash asset, or create one. Returns new cash total in base. */
@@ -117,8 +119,10 @@ export const useAppStore = create<State>()(
       activity: [],
       messages: [],
       cryptoPrices: {},
+      onboardingComplete: false,
 
       setBaseCurrency: (c) => set({ baseCurrency: c }),
+      completeOnboarding: () => set({ onboardingComplete: true }),
 
       addTransaction: (t) => {
         const tx: Transaction = { ...t, id: uid() };

@@ -4,6 +4,7 @@ import { MetricCard } from "@/components/MetricCard";
 import { ChatInput } from "@/components/ChatInput";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { AIResponse } from "@/components/AIResponse";
+import { Onboarding } from "@/components/Onboarding";
 import { useAppStore, getNetWorth, getInvestmentValue, getSpendInRange } from "@/lib/store";
 import { useDailyInsight } from "@/lib/insights";
 import { fmtMoney } from "@/lib/currency";
@@ -33,6 +34,7 @@ function HomePage() {
   const base = state.baseCurrency;
   const insight = useDailyInsight();
   const hasEngaged = state.messages.length > 0;
+  const onboardingComplete = state.onboardingComplete;
 
   const nw = getNetWorth(state);
   const today = getSpendInRange(state, 1);
@@ -44,6 +46,7 @@ function HomePage() {
 
   return (
     <AppShell subtitle="Good to see you">
+      {!onboardingComplete && <Onboarding />}
       <h1 className="sr-only">Lucid — Home</h1>
       {/* Hero metric */}
       <div className="grid gap-3">
