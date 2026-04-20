@@ -64,7 +64,7 @@ export function MetricCard({
             prominent ? "text-[34px] leading-none" : "text-[22px] leading-none"
           )}
         >
-          {value}
+          {display}
         </p>
         {(delta || hint) && (
           <div className="mt-2.5 flex items-center gap-2 text-[11px]">
