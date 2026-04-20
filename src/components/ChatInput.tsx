@@ -227,6 +227,88 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
 }
 
 function formatBase(value: number, c: string): string {
-  const sym = c === "USD" ? "$" : c === "EUR" ? "€" : c === "GBP" ? "£" : "د.إ";
-  return `${sym}${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  return fmtMoney(value, c as "USD" | "EUR" | "GBP" | "AED");
+}
+
+/**
+ * Compose a premium, 1–2 sentence assistant reply tailored to the action
+ * the user just performed. Reads fresh store state so the second line can
+ * reflect the new totals (e.g. "Food spend is now $84 today.").
+ */
+function composeReply(
+  result: ReturnType<typeof parseMessage>,
+  rawText: string,
+  base: "USD" | "EUR" | "GBP" | "AED"
+): string {
+  const state = useAppStore.getState();
+
+  if (result.intent === "question") return answerQuestion(rawText);
+
+  if (result.intent === "clarify" || result.intent === "unknown") {
+    return result.reply;
+  }
+
+  if (result.intent === "expense_log" && result.entries[0]?.amount != null) {
+    const e = result.entries[0];
+    const amt = toBase(e.amount!, e.currency ?? base, base);
+    const cat = (e.category ?? "Other") as TxCategory;
+    const todayCat = getCategorySpend(state, 1).find((c) => c.category === cat)?.amount ?? 0;
+    const today = getSpendInRange(state, 1);
+    const second =
+      todayCat > 0
+        ? `${cat} spend is now ${fmtMoney(todayCat, base)} today.`
+        : `Today's spend: ${fmtMoney(today, base)}.`;
+    return `Logged ${fmtMoney(amt, base)} to ${cat}. ${second}`;
+  }
+
+  if (result.intent === "income_log" && result.entries[0]?.amount != null) {
+    const e = result.entries[0];
+    const amt = toBase(e.amount!, e.currency ?? base, base);
+    return `Income recorded: ${fmtMoney(amt, base)}. Cash balance updated.`;
+  }
+
+  if (result.intent === "asset_log" && result.entries[0]) {
+    const e = result.entries[0];
+    const amt = toBase(e.amount ?? 0, e.currency ?? base, base);
+    const name = e.assetName ?? "Asset";
+    if (e.assetKind === "cash" || e.assetKind === "savings") {
+      return `Added ${fmtMoney(amt, base)} to ${name.toLowerCase()}. Cash balance updated.`;
+    }
+    return `Added asset: ${name} (${fmtMoney(amt, base)}). Cash adjusted — net worth remains stable.`;
+  }
+
+  if (result.intent === "investment_log" && result.entries[0]) {
+    const e = result.entries[0];
+    const sym = e.symbol ?? e.assetName ?? "investment";
+    const nw = getNetWorth(state);
+    const inv = getInvestmentValue(state);
+    const share = nw > 0 ? Math.round((inv / nw) * 100) : 0;
+    const first =
+      e.quantity != null && e.symbol
+        ? `Added ${e.quantity} ${e.symbol} to your portfolio.`
+        : `Added ${fmtMoney(toBase(e.amount ?? 0, e.currency ?? base, base), base)} to ${sym}.`;
+    const second =
+      share > 0
+        ? `Investments now represent ${share}% of your net worth.`
+        : `Portfolio updated.`;
+    return `${first} ${second}`;
+  }
+
+  if (result.intent === "goal_create" && result.goal) {
+    const g = result.goal;
+    const target = g.targetAmount ?? 0;
+    if (g.type === "save" && target > 0 && g.deadline) {
+      const months = Math.max(
+        1,
+        Math.round(
+          (new Date(g.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30)
+        )
+      );
+      const monthly = target / months;
+      return `Goal set: ${fmtMoney(target, base)} in ${months} month${months > 1 ? "s" : ""}. About ${fmtMoney(monthly, base)}/month to stay on track.`;
+    }
+    return `Goal set: ${g.title}. Lucid will track your progress.`;
+  }
+
+  return result.reply;
 }
