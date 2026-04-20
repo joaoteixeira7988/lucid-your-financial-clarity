@@ -224,8 +224,11 @@ export function ChatInput({
             <button
               key={q.label}
               type="button"
-              onClick={() => handleQuick(q.prefill)}
-              className="lucid-chip flex-shrink-0 whitespace-nowrap"
+              onClick={() => {
+                playSound("tap");
+                handleQuick(q.prefill);
+              }}
+              className="lucid-chip lucid-press flex-shrink-0 whitespace-nowrap"
             >
               {q.label}
             </button>
@@ -234,11 +237,12 @@ export function ChatInput({
       )}
       <div
         className={cn(
-          "lucid-card relative flex items-end gap-2 transition-all",
+          "lucid-card relative flex items-end gap-2 transition-all duration-200",
           isHero
             ? "rounded-[28px] p-2.5 pl-5 shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.22),0_18px_50px_-18px_oklch(0.66_0.18_252/0.55)]"
             : "rounded-3xl p-2 pl-4",
-          "focus-within:shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.5),0_12px_36px_-12px_oklch(0.66_0.18_252/0.55)]"
+          "focus-within:shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.5),0_12px_36px_-12px_oklch(0.66_0.18_252/0.55)]",
+          pulsing && "scale-[0.992] opacity-90"
         )}
       >
         <Sparkles
@@ -265,10 +269,10 @@ export function ChatInput({
           onClick={handleSend}
           disabled={!text.trim()}
           className={cn(
-            "flex flex-shrink-0 items-center justify-center rounded-2xl transition-all",
+            "lucid-press flex flex-shrink-0 items-center justify-center rounded-2xl transition-[background,box-shadow,transform] duration-200",
             isHero ? "mb-1 h-11 w-11" : "mb-1 h-9 w-9",
             text.trim()
-              ? "bg-primary text-primary-foreground shadow-[0_4px_18px_-4px_oklch(0.66_0.18_252/0.7)] hover:scale-[1.04]"
+              ? "bg-primary text-primary-foreground shadow-[0_4px_18px_-4px_oklch(0.66_0.18_252/0.7)]"
               : "bg-surface-elevated text-muted-foreground"
           )}
           aria-label="Send"
