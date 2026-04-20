@@ -4,6 +4,7 @@ import { MetricCard } from "@/components/MetricCard";
 import { ChatInput } from "@/components/ChatInput";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { AIResponse } from "@/components/AIResponse";
+import { Onboarding } from "@/components/Onboarding";
 import { useAppStore, getNetWorth, getInvestmentValue, getSpendInRange } from "@/lib/store";
 import { useDailyInsight } from "@/lib/insights";
 import { fmtMoney } from "@/lib/currency";
