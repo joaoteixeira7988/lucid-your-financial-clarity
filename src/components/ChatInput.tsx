@@ -110,6 +110,7 @@ export function ChatInput({
         at: new Date().toISOString(),
       });
     } else if (result.intent === "income_log") {
+      setLastAction({ kind: "income", at: new Date().toISOString() });
       result.entries.forEach((e) => {
         if (e.amount == null) return;
         addTransaction({
@@ -125,6 +126,7 @@ export function ChatInput({
         addActivity("income", `Income: ${formatBase(baseAmt, baseCurrency)}.`);
       });
     } else if (result.intent === "investment_log") {
+      setLastAction({ kind: "investment", at: new Date().toISOString() });
       result.entries.forEach((e) => {
         addAsset({
           kind: e.assetKind ?? "stock",
@@ -145,6 +147,7 @@ export function ChatInput({
         addActivity("investment", label);
       });
     } else if (result.intent === "asset_log") {
+      setLastAction({ kind: "asset", at: new Date().toISOString() });
       result.entries.forEach((e) => {
         const baseAmt = toBase(e.amount ?? 0, e.currency ?? baseCurrency, baseCurrency);
         if (e.assetKind === "cash" || e.assetKind === "savings") {
@@ -179,11 +182,7 @@ export function ChatInput({
       addActivity("goal", `Goal created: ${result.goal.title}.`);
       setLastAction({ kind: "goal", at: new Date().toISOString() });
     } else {
-      // Clear inline-correction context for non-expense interactions.
-      if (result.intent === "income_log") setLastAction({ kind: "income", at: new Date().toISOString() });
-      else if (result.intent === "investment_log") setLastAction({ kind: "investment", at: new Date().toISOString() });
-      else if (result.intent === "asset_log") setLastAction({ kind: "asset", at: new Date().toISOString() });
-      else setLastAction({ kind: "other", at: new Date().toISOString() });
+      setLastAction({ kind: "other", at: new Date().toISOString() });
     }
 
     const reply = composeReply(result, value, baseCurrency);
