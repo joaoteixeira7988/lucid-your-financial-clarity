@@ -12,6 +12,7 @@ import { answerQuestion } from "@/lib/insights";
 import type { TxCategory } from "@/lib/types";
 import { toBase, fmtMoney } from "@/lib/currency";
 import { cn } from "@/lib/utils";
+import { playSound } from "@/lib/sound";
 
 const QUICK_ACTIONS: { label: string; prefill: string }[] = [
   { label: "Food", prefill: "Spent  on lunch" },
