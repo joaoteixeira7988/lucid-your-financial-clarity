@@ -190,6 +190,15 @@ export function ChatInput({
       setLastAction({ kind: "other", at: new Date().toISOString() });
     }
 
+    // Soft confirm tone for any committed action (skip pure questions/clarify)
+    if (
+      result.intent !== "question" &&
+      result.intent !== "clarify" &&
+      result.intent !== "unknown"
+    ) {
+      setTimeout(() => playSound("confirm"), 180);
+    }
+
     const reply = composeReply(result, value, baseCurrency);
     setTimeout(() => {
       addMessage({ role: "assistant", content: reply });
