@@ -46,6 +46,7 @@ export function ChatInput({
   const adjustCash = useAppStore((s) => s.adjustCash);
   const addGoal = useAppStore((s) => s.addGoal);
   const addActivity = useAppStore((s) => s.addActivity);
+  const setLastAction = useAppStore((s) => s.setLastAction);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -73,22 +74,40 @@ export function ChatInput({
     const result = parseMessage(value, baseCurrency);
 
     if (result.intent === "expense_log") {
-      result.entries.forEach((e) => {
+      let firstTxId: string | undefined;
+      let firstCat: TxCategory | undefined;
+      let inferred = false;
+      result.entries.forEach((e, i) => {
         if (e.amount == null) return;
-        addTransaction({
+        const tx = addTransaction({
           amount: e.amount,
           currency: e.currency ?? baseCurrency,
           category: (e.category ?? "Other") as TxCategory,
           merchant: e.merchant,
           date: e.date ?? new Date().toISOString(),
           type: "expense",
+          source: "text",
+          confidence: result.confidence,
         });
+        if (i === 0) {
+          firstTxId = tx.id;
+          firstCat = (e.category ?? "Other") as TxCategory;
+          inferred = !!e.categoryInferred;
+        }
         const baseAmt = toBase(e.amount, e.currency ?? baseCurrency, baseCurrency);
         adjustCash(-baseAmt);
         addActivity(
           "expense",
           `Logged expense: ${e.category ?? "Other"} (${formatBase(baseAmt, baseCurrency)}).`
         );
+      });
+      setLastAction({
+        kind: "expense",
+        transactionId: firstTxId,
+        category: firstCat,
+        inferred,
+        confidence: result.confidence,
+        at: new Date().toISOString(),
       });
     } else if (result.intent === "income_log") {
       result.entries.forEach((e) => {
