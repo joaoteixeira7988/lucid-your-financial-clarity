@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, PieChart, Briefcase, Wallet, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { playSound } from "@/lib/sound";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
