@@ -34,6 +34,7 @@ function HomePage() {
   const base = state.baseCurrency;
   const insight = useDailyInsight();
   const hasEngaged = state.messages.length > 0;
+  const onboardingComplete = state.onboardingComplete;
 
   const nw = getNetWorth(state);
   const today = getSpendInRange(state, 1);
