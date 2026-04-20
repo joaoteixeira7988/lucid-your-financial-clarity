@@ -65,11 +65,15 @@ export function ActivityFeed() {
         </span>
       </header>
       <ul className="space-y-2">
-        {items.map((item) => {
+        {items.map((item, idx) => {
           const Icon = ICONS[item.kind];
           const colors = COLORS[item.kind];
           return (
-            <li key={item.id} className="flex items-start gap-2.5">
+            <li
+              key={item.id}
+              className="lucid-rise-sm flex items-start gap-2.5"
+              style={{ animationDelay: `${Math.min(idx, 4) * 35 + 60}ms` }}
+            >
               <span
                 className={cn(
                   "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md opacity-80",
