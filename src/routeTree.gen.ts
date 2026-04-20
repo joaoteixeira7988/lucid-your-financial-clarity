@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SpendingRouteImport } from './routes/spending'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as NetWorthRouteImport } from './routes/net-worth'
+import { Route as InvestmentsRouteImport } from './routes/investments'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -30,6 +31,11 @@ const NetWorthRoute = NetWorthRouteImport.update({
   path: '/net-worth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvestmentsRoute = InvestmentsRouteImport.update({
+  id: '/investments',
+  path: '/investments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InsightsRoute = InsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
@@ -44,6 +50,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/insights': typeof InsightsRoute
+  '/investments': typeof InvestmentsRoute
   '/net-worth': typeof NetWorthRoute
   '/portfolio': typeof PortfolioRoute
   '/spending': typeof SpendingRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/insights': typeof InsightsRoute
+  '/investments': typeof InvestmentsRoute
   '/net-worth': typeof NetWorthRoute
   '/portfolio': typeof PortfolioRoute
   '/spending': typeof SpendingRoute
@@ -59,21 +67,42 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/insights': typeof InsightsRoute
+  '/investments': typeof InvestmentsRoute
   '/net-worth': typeof NetWorthRoute
   '/portfolio': typeof PortfolioRoute
   '/spending': typeof SpendingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/insights' | '/net-worth' | '/portfolio' | '/spending'
+  fullPaths:
+    | '/'
+    | '/insights'
+    | '/investments'
+    | '/net-worth'
+    | '/portfolio'
+    | '/spending'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/insights' | '/net-worth' | '/portfolio' | '/spending'
-  id: '__root__' | '/' | '/insights' | '/net-worth' | '/portfolio' | '/spending'
+  to:
+    | '/'
+    | '/insights'
+    | '/investments'
+    | '/net-worth'
+    | '/portfolio'
+    | '/spending'
+  id:
+    | '__root__'
+    | '/'
+    | '/insights'
+    | '/investments'
+    | '/net-worth'
+    | '/portfolio'
+    | '/spending'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InsightsRoute: typeof InsightsRoute
+  InvestmentsRoute: typeof InvestmentsRoute
   NetWorthRoute: typeof NetWorthRoute
   PortfolioRoute: typeof PortfolioRoute
   SpendingRoute: typeof SpendingRoute
@@ -102,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NetWorthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/investments': {
+      id: '/investments'
+      path: '/investments'
+      fullPath: '/investments'
+      preLoaderRoute: typeof InvestmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/insights': {
       id: '/insights'
       path: '/insights'
@@ -122,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InsightsRoute: InsightsRoute,
+  InvestmentsRoute: InvestmentsRoute,
   NetWorthRoute: NetWorthRoute,
   PortfolioRoute: PortfolioRoute,
   SpendingRoute: SpendingRoute,
