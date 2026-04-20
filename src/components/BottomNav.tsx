@@ -29,8 +29,11 @@ export function BottomNav() {
             <Link
               key={to}
               to={to}
+              onClick={() => {
+                if (!active) playSound("tap");
+              }}
               className={cn(
-                "group flex min-w-[58px] flex-col items-center gap-1 rounded-xl px-2.5 py-2 transition-colors",
+                "lucid-press group flex min-w-[58px] flex-col items-center gap-1 rounded-xl px-2.5 py-2 transition-colors",
                 active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
