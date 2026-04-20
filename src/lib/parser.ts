@@ -350,7 +350,7 @@ export function parseMessage(text: string, baseCurrency: Currency): ParsedResult
     intent: "unknown",
     entries: [],
     confidence: 0.2,
-    reply: "I'm not sure what to do with that. Try logging an expense, tracking an asset, or asking about your money.",
+    reply: "That's outside your financial system. Try logging spending, an asset, or asking about your money.",
   };
 }
 

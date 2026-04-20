@@ -332,5 +332,5 @@ export function answerQuestion(question: string): string {
     if (!g) return "You don't have any active goals yet. Try: \"I want to save $5,000 in 6 months\".";
     return `Goal: ${g.title}. Keep going — small steps compound.`;
   }
-  return `I have your data ready. Try asking about today, this week, your net worth, cash, investments, or your top category.`;
+  return `Try asking about today, this week, your net worth, cash, investments, or your top category.`;
 }
