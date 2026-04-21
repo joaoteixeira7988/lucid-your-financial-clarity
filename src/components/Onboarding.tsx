@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Sparkles, Target } from "lucide-react";
 import { useAppStore, getNetWorth, getSpendInRange } from "@/lib/store";
-import { parseMessage } from "@/lib/parser";
+import { parseMessageAI } from "@/lib/aiParser";
 import { toBase, fmtMoney } from "@/lib/currency";
 import type { TxCategory } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -63,11 +63,13 @@ export function Onboarding() {
     setTimeout(() => submit(prompt), 160);
   }
 
-  function submit(value: string) {
+  async function submit(value: string) {
     const v = value.trim();
     if (!v) return;
     addMessage({ role: "user", content: v });
-    const result = parseMessage(v, base);
+    setText("");
+    setStage("reveal");
+    const result = await parseMessageAI(v, base);
 
     let reply = "Got it.";
 
