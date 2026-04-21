@@ -130,8 +130,6 @@ export function Onboarding() {
 
     setAiReply(reply);
     addMessage({ role: "assistant", content: reply });
-    setStage("reveal");
-    setText("");
 
     setTimeout(() => setStage("second"), 1600);
   }
