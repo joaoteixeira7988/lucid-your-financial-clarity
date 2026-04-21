@@ -8,25 +8,29 @@ import { cn } from "@/lib/utils";
 
 type Stage = "hero" | "reveal" | "second";
 
-const EXAMPLES = [
-  "I spent 25 on lunch",
-  "I make 3000/month",
-  "Add 0.5 ETH",
+const ROTATING_PLACEHOLDERS = [
+  "Try: I spent 25 on lunch",
+  "Try: I make 3000/month",
+  "Try: bought a car for 20k",
+  "Try: add 0.5 ETH",
 ];
 
-/**
- * Lucid Onboarding — a live demo disguised as setup.
- * Stages:
- *   hero    → centered command bar + 3 example prompts
- *   reveal  → metrics + AI response + activity fade in (still overlay, command bar docked-feel)
- *   second  → AI suggests a goal; "Set goal" or "Not now" → exits to real app
- */
+const QUICK_ACTIONS: { label: string; prompt: string }[] = [
+  { label: "Food", prompt: "Spent 12 on food" },
+  { label: "Transport", prompt: "Spent 8 on transport" },
+  { label: "Shopping", prompt: "Spent 40 on shopping" },
+  { label: "Add asset", prompt: "Add 5000 in cash" },
+  { label: "Add investment", prompt: "Add 0.5 ETH" },
+  { label: "Set goal", prompt: "Save 500 this month" },
+];
+
 export function Onboarding() {
   const [stage, setStage] = useState<Stage>("hero");
   const [text, setText] = useState("");
   const [aiReply, setAiReply] = useState<string>("");
   const [logged, setLogged] = useState<{ amount: number; category: TxCategory } | null>(null);
   const [exiting, setExiting] = useState(false);
+  const [phIndex, setPhIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const base = useAppStore((s) => s.baseCurrency);
@@ -38,6 +42,15 @@ export function Onboarding() {
   const addMessage = useAppStore((s) => s.addMessage);
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
 
+  // Rotate placeholder
+  useEffect(() => {
+    if (stage !== "hero") return;
+    const id = setInterval(() => {
+      setPhIndex((i) => (i + 1) % ROTATING_PLACEHOLDERS.length);
+    }, 2600);
+    return () => clearInterval(id);
+  }, [stage]);
+
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -45,9 +58,9 @@ export function Onboarding() {
     el.style.height = Math.min(el.scrollHeight, 140) + "px";
   }, [text]);
 
-  function handleExample(prompt: string) {
+  function handleQuick(prompt: string) {
     setText(prompt);
-    setTimeout(() => submit(prompt), 180);
+    setTimeout(() => submit(prompt), 160);
   }
 
   function submit(value: string) {
@@ -100,7 +113,6 @@ export function Onboarding() {
       addActivity("investment", `Added investment: ${e.symbol ?? e.assetName}.`);
       reply = `Added ${e.quantity ?? ""} ${e.symbol ?? "investment"} to your portfolio.\nTracking live in your assets.`;
     } else {
-      // fallback: still log something so the demo feels alive
       addTransaction({
         amount: 25,
         currency: base,
@@ -119,7 +131,6 @@ export function Onboarding() {
     setStage("reveal");
     setText("");
 
-    // After breathing room, surface the second value hit
     setTimeout(() => setStage("second"), 1600);
   }
 
@@ -164,12 +175,12 @@ export function Onboarding() {
     >
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/3 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/15 blur-[120px]" />
+        <div className="absolute left-1/2 top-[42%] h-[460px] w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/15 blur-[130px]" />
       </div>
 
-      {/* Logo */}
+      {/* Top bar */}
       <div className="relative flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+18px)]">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 opacity-90">
           <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/15">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
           </div>
@@ -186,18 +197,97 @@ export function Onboarding() {
         )}
       </div>
 
-      {/* Body */}
-      <div className="relative flex flex-1 flex-col px-5 pb-6">
-        {/* Metrics — fade in after first input */}
-        <div
-          className={cn(
-            "transition-all duration-500",
-            stage === "hero"
-              ? "pointer-events-none -translate-y-2 opacity-0"
-              : "translate-y-0 opacity-100"
-          )}
-        >
-          <div className="mx-auto mt-4 grid w-full max-w-md gap-2.5">
+      {/* HERO STAGE — focused center stack */}
+      {isHero && (
+        <div className="relative flex flex-1 flex-col items-center justify-center px-5 pb-[calc(96px+env(safe-area-inset-bottom))]">
+          <div className="w-full max-w-md -translate-y-2">
+            {/* Headline */}
+            <div className="lucid-rise text-center">
+              <h1 className="text-[30px] font-semibold leading-[1.05] tracking-tight">
+                Stop tracking.
+                <br />
+                <span className="text-primary">Start talking.</span>
+              </h1>
+              <p className="mt-2.5 text-[14px] text-muted-foreground">
+                Tell Lucid anything about your money.
+              </p>
+              <p className="mt-1 text-[11px] tracking-wide text-muted-foreground/55">
+                Lucid is ready
+              </p>
+            </div>
+
+            {/* Quick action category pills — above the command bar */}
+            <div
+              className="lucid-rise mt-6 flex gap-1.5 overflow-x-auto pb-1"
+              style={{
+                animationDelay: "80ms",
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+              }}
+            >
+              <style>{`.qa-row::-webkit-scrollbar{display:none}`}</style>
+              <div className="qa-row mx-auto flex gap-1.5">
+                {QUICK_ACTIONS.map((a) => (
+                  <button
+                    key={a.label}
+                    type="button"
+                    onClick={() => handleQuick(a.prompt)}
+                    className="lucid-press lucid-chip whitespace-nowrap opacity-80 hover:opacity-100"
+                  >
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Command bar — focal point */}
+            <div
+              className="lucid-rise mt-3"
+              style={{ animationDelay: "140ms" }}
+            >
+              <div
+                className={cn(
+                  "lucid-card lucid-breathe relative flex items-end gap-2 rounded-[28px] bg-surface/95 p-2.5 pl-5 backdrop-blur-xl",
+                  "focus-within:!shadow-[0_0_0_1.5px_oklch(0.66_0.18_252/0.6),0_28px_72px_-18px_oklch(0.66_0.18_252/0.7)] focus-within:!opacity-100"
+                )}
+              >
+                <Sparkles className="mb-4 h-[18px] w-[18px] flex-shrink-0 text-primary" />
+                <textarea
+                  ref={inputRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={onKeyDown}
+                  rows={1}
+                  placeholder={ROTATING_PLACEHOLDERS[phIndex]}
+                  autoFocus
+                  className="tabular flex-1 resize-none bg-transparent py-4 text-[15.5px] leading-snug text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                  style={{ maxHeight: 140 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => submit(text)}
+                  disabled={!text.trim()}
+                  className={cn(
+                    "lucid-press mb-1 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition-all",
+                    text.trim()
+                      ? "bg-primary text-primary-foreground shadow-[0_6px_22px_-4px_oklch(0.66_0.18_252/0.75)] hover:scale-[1.04]"
+                      : "bg-surface-elevated text-muted-foreground"
+                  )}
+                  aria-label="Send"
+                >
+                  <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REVEAL / SECOND STAGES */}
+      {!isHero && (
+        <div className="relative flex flex-1 flex-col px-5 pb-6">
+          {/* Metrics */}
+          <div className="lucid-rise mx-auto mt-4 grid w-full max-w-md gap-2.5">
             <div className="lucid-card rounded-3xl p-5">
               <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 Net worth
@@ -225,155 +315,68 @@ export function Onboarding() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Hero copy — only in hero stage */}
-        {isHero && (
-          <div className="mx-auto mt-auto flex w-full max-w-md flex-col items-center text-center">
-            <h1 className="text-[30px] font-semibold leading-[1.05] tracking-tight">
-              Stop tracking.<br />
-              <span className="text-primary">Start talking.</span>
-            </h1>
-            <p className="mt-3 text-[14px] text-muted-foreground">
-              Tell Lucid anything about your money.
-            </p>
-          </div>
-        )}
-
-        {/* AI Response card — appears post-input */}
-        {stage !== "hero" && aiReply && (
-          <div className="mx-auto mt-5 w-full max-w-md animate-fade-in">
-            <div className="rounded-3xl border border-primary/30 bg-primary/[0.07] p-5 shadow-[0_18px_60px_-24px_oklch(0.66_0.18_252/0.55)]">
-              <div className="flex items-start gap-2.5">
-                <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                <p className="whitespace-pre-line text-[14.5px] leading-snug text-foreground">
-                  {aiReply}
-                </p>
+          {/* AI Response card */}
+          {aiReply && (
+            <div className="lucid-rise mx-auto mt-5 w-full max-w-md">
+              <div className="rounded-3xl border border-primary/30 bg-primary/[0.07] p-5 shadow-[0_18px_60px_-24px_oklch(0.66_0.18_252/0.55)]">
+                <div className="flex items-start gap-2.5">
+                  <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  <p className="whitespace-pre-line text-[14.5px] leading-snug text-foreground">
+                    {aiReply}
+                  </p>
+                </div>
               </div>
+              {logged && (
+                <div className="mt-3 flex items-center gap-2 px-1 text-[12px] text-muted-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
+                  Logged expense: {logged.category} ({fmtMoney(logged.amount, base)})
+                </div>
+              )}
             </div>
+          )}
 
-            {/* Activity preview */}
-            {logged && (
-              <div className="mt-3 flex items-center gap-2 px-1 text-[12px] text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
-                Logged expense: {logged.category} ({fmtMoney(logged.amount, base)})
+          {/* Second value hit — goal suggestion */}
+          {stage === "second" && (
+            <div className="lucid-rise mx-auto mt-4 w-full max-w-md">
+              <div className="lucid-card rounded-3xl p-5">
+                <div className="flex items-start gap-2.5">
+                  <Target className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  <p className="text-[14px] leading-snug text-foreground/90">
+                    Want to set a weekly spending target?
+                  </p>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={setGoal}
+                    className="lucid-press flex-1 rounded-2xl bg-primary px-4 py-3 text-[13.5px] font-medium text-primary-foreground shadow-[0_4px_18px_-4px_oklch(0.66_0.18_252/0.7)] hover:scale-[1.02]"
+                  >
+                    Set goal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={finish}
+                    className="lucid-press flex-1 rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-[13.5px] font-medium text-foreground/90 hover:bg-surface-elevated/80"
+                  >
+                    Not now
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Second value hit — goal suggestion */}
-        {stage === "second" && (
-          <div className="mx-auto mt-4 w-full max-w-md animate-fade-in">
-            <div className="lucid-card rounded-3xl p-5">
-              <div className="flex items-start gap-2.5">
-                <Target className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                <p className="text-[14px] leading-snug text-foreground/90">
-                  Want to set a weekly spending target?
-                </p>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <button
-                  type="button"
-                  onClick={setGoal}
-                  className="flex-1 rounded-2xl bg-primary px-4 py-3 text-[13.5px] font-medium text-primary-foreground shadow-[0_4px_18px_-4px_oklch(0.66_0.18_252/0.7)] transition hover:scale-[1.02]"
-                >
-                  Set goal
-                </button>
+              <div className="mt-5 text-center text-[11.5px] text-muted-foreground/80">
+                Save your financial system ·{" "}
                 <button
                   type="button"
                   onClick={finish}
-                  className="flex-1 rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-[13.5px] font-medium text-foreground/90 transition hover:bg-surface-elevated/80"
+                  className="text-foreground/80 underline-offset-4 hover:underline"
                 >
-                  Not now
+                  Continue
                 </button>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Spacer pushes command bar */}
-        <div className={cn(isHero ? "mt-8" : "mt-auto pt-6")} />
-
-        {/* Command bar */}
-        <div className="mx-auto w-full max-w-md">
-          {isHero && (
-            <div className="mb-3 flex flex-wrap justify-center gap-1.5">
-              {EXAMPLES.map((ex) => (
-                <button
-                  key={ex}
-                  type="button"
-                  onClick={() => handleExample(ex)}
-                  className="lucid-chip whitespace-nowrap transition-transform active:scale-95"
-                >
-                  {ex}
-                </button>
-              ))}
-            </div>
-          )}
-          <div
-            className={cn(
-              "lucid-card relative flex items-end gap-2 transition-all duration-500",
-              isHero
-                ? "rounded-[28px] p-2.5 pl-5 shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.28),0_22px_60px_-20px_oklch(0.66_0.18_252/0.6)]"
-                : "rounded-3xl p-2 pl-4",
-              "focus-within:shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.5),0_12px_36px_-12px_oklch(0.66_0.18_252/0.55)]"
-            )}
-          >
-            <Sparkles
-              className={cn(
-                "flex-shrink-0 text-primary",
-                isHero ? "mb-3.5 h-[18px] w-[18px]" : "mb-2.5 h-4 w-4"
-              )}
-            />
-            <textarea
-              ref={inputRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={onKeyDown}
-              rows={1}
-              placeholder="Tell Lucid what happened…"
-              className={cn(
-                "tabular flex-1 resize-none bg-transparent leading-snug text-foreground placeholder:text-muted-foreground/65 focus:outline-none",
-                isHero ? "py-3.5 text-[15px]" : "py-2.5 text-[14px]"
-              )}
-              style={{ maxHeight: 140 }}
-            />
-            <button
-              type="button"
-              onClick={() => submit(text)}
-              disabled={!text.trim()}
-              className={cn(
-                "flex flex-shrink-0 items-center justify-center rounded-2xl transition-all",
-                isHero ? "mb-1 h-11 w-11" : "mb-1 h-9 w-9",
-                text.trim()
-                  ? "bg-primary text-primary-foreground shadow-[0_4px_18px_-4px_oklch(0.66_0.18_252/0.7)] hover:scale-[1.04]"
-                  : "bg-surface-elevated text-muted-foreground"
-              )}
-              aria-label="Send"
-            >
-              <ArrowUp
-                className={cn(isHero ? "h-[18px] w-[18px]" : "h-4 w-4")}
-                strokeWidth={2.5}
-              />
-            </button>
-          </div>
-
-          {/* Soft account prompt — only after second value hit */}
-          {stage === "second" && (
-            <div className="mt-5 text-center text-[11.5px] text-muted-foreground/80">
-              Save your financial system ·{" "}
-              <button
-                type="button"
-                onClick={finish}
-                className="text-foreground/80 underline-offset-4 hover:underline"
-              >
-                Continue
-              </button>
-            </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
