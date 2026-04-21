@@ -216,11 +216,25 @@ export const useAppStore = create<State>()(
       },
     }),
     {
-      name: "lucid-store-v2",
+      name: "lucid-store-v3",
+      version: 3,
+      // Don't persist onboarding/session-only state — onboarding should be
+      // driven by real data presence, not a sticky flag that can drift.
+      partialize: (s) => ({
+        baseCurrency: s.baseCurrency,
+        transactions: s.transactions,
+        assets: s.assets,
+        liabilities: s.liabilities,
+        goals: s.goals,
+        activity: s.activity,
+        cryptoPrices: s.cryptoPrices,
+        pricesLoadedAt: s.pricesLoadedAt,
+      }),
       onRehydrateStorage: () => (state) => {
-        if (state && state.transactions.length === 0 && state.assets.length === 0) {
-          state.seedDemo();
-        }
+        if (!state) return;
+        // Always start sessions with a clean message thread + onboarding gate.
+        state.messages = [];
+        state.onboardingComplete = false;
       },
     }
   )
