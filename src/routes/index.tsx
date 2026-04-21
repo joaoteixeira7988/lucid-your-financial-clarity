@@ -34,7 +34,7 @@ function HomePage() {
   const base = state.baseCurrency;
   const insight = useDailyInsight();
   const hasEngaged = state.messages.length > 0;
-  const onboardingComplete = state.onboardingComplete;
+  const showOnboarding = !state.onboardingComplete && !hasEngaged;
 
   const nw = getNetWorth(state);
   const today = getSpendInRange(state, 1);
@@ -46,7 +46,7 @@ function HomePage() {
 
   return (
     <AppShell subtitle="Good to see you">
-      {!onboardingComplete && <Onboarding />}
+      {showOnboarding && <Onboarding />}
       <h1 className="sr-only">Lucid — Home</h1>
       {/* Hero metric */}
       <div className="grid gap-3">
