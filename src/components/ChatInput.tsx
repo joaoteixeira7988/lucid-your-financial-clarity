@@ -7,7 +7,8 @@ import {
   getNetWorth,
   getSpendInRange,
 } from "@/lib/store";
-import { parseMessage } from "@/lib/parser";
+import { parseMessageAI } from "@/lib/aiParser";
+import type { ParsedResult } from "@/lib/types";
 import { answerQuestion } from "@/lib/insights";
 import type { TxCategory } from "@/lib/types";
 import { toBase, fmtMoney } from "@/lib/currency";
@@ -68,15 +69,16 @@ export function ChatInput({
     });
   }
 
-  function handleSend() {
+  async function handleSend() {
     const value = text.trim();
     if (!value) return;
     playSound("send");
     setPulsing(true);
     setTimeout(() => setPulsing(false), 160);
     addMessage({ role: "user", content: value });
+    setText("");
 
-    const result = parseMessage(value, baseCurrency);
+    const result = await parseMessageAI(value, baseCurrency);
 
     if (result.intent === "expense_log") {
       let firstTxId: string | undefined;
@@ -203,8 +205,6 @@ export function ChatInput({
     setTimeout(() => {
       addMessage({ role: "assistant", content: reply });
     }, 220);
-
-    setText("");
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -293,7 +293,7 @@ function formatBase(value: number, c: string): string {
  * Reads fresh store state so the second line reflects updated totals.
  */
 function composeReply(
-  result: ReturnType<typeof parseMessage>,
+  result: ParsedResult,
   rawText: string,
   base: "USD" | "EUR" | "GBP" | "AED"
 ): string {
