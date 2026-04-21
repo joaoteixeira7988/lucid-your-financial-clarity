@@ -196,6 +196,27 @@ html {
 .lucid-rise-sm { animation: lucid-rise-sm 180ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 .lucid-fade { animation: lucid-fade 200ms ease-out both; }
 
+/* Calm breathing glow — for the onboarding command bar */
+@keyframes lucid-breathe {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px oklch(0.66 0.18 252 / 0.28),
+      0 18px 50px -22px oklch(0.66 0.18 252 / 0.45);
+    opacity: 0.97;
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px oklch(0.66 0.18 252 / 0.45),
+      0 26px 70px -20px oklch(0.66 0.18 252 / 0.7);
+    opacity: 1;
+  }
+}
+.lucid-breathe { animation: lucid-breathe 3.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lucid-breathe { animation: none !important; }
+}
+
 /* Press feedback — applied to interactive controls */
 .lucid-press { transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1); }
 .lucid-press:active { transform: scale(0.97); }
