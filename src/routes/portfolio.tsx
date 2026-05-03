@@ -12,11 +12,10 @@ import {
   TANGIBLE_ASSET_KINDS,
   CASH_KINDS,
 } from "@/lib/store";
-import { Wallet, PiggyBank } from "lucide-react";
 import { fmtMoney, toBase } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import type { Asset, AssetKind } from "@/lib/types";
-import { Car, Home as HomeIcon, Gem, Laptop, Sofa, Package } from "lucide-react";
+import { Car, Home as HomeIcon, Gem, Laptop, Sofa, Package, Wallet, PiggyBank } from "lucide-react";
 
 export const Route = createFileRoute("/portfolio")({
   head: () => ({
