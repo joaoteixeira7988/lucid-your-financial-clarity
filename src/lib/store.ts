@@ -24,6 +24,7 @@ type State = {
   activity: ActivityItem[];
   messages: ChatMessage[];
   cryptoPrices: Record<string, number>; // symbol -> USD price
+  stockPrices: Record<string, number>; // symbol -> USD price
   pricesLoadedAt?: string;
   onboardingComplete: boolean;
   /** The most recent action — powers inline correction on the AI response. */
