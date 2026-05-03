@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Sparkles, Target } from "lucide-react";
 import { useAppStore, getNetWorth, getSpendInRange } from "@/lib/store";
 import { parseMessageAI } from "@/lib/aiParser";
+import { fetchQuote } from "@/lib/market";
 import { toBase, fmtMoney } from "@/lib/currency";
 import type { TxCategory } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -105,15 +106,35 @@ export function Onboarding() {
       reply = `Income recorded: ${fmtMoney(amt, base)}.\nA solid save target is ~${fmtMoney(amt * 0.2, base)}/month.`;
     } else if (result.intent === "investment_log" && result.entries[0]) {
       const e = result.entries[0];
+      const kind: "crypto" | "stock" = e.assetKind === "stock" ? "stock" : "crypto";
+      const symbol = e.symbol?.toUpperCase();
+      let livePriceUsd: number | undefined;
+      let resolvedName: string | undefined;
+      if (symbol) {
+        const q = await fetchQuote(symbol, kind);
+        livePriceUsd = q?.price;
+        resolvedName = q?.name;
+      }
+      let quantity = e.quantity;
+      let valueBase: number | undefined =
+        e.amount != null ? toBase(e.amount, e.currency ?? base, base) : undefined;
+      if (livePriceUsd && quantity == null && valueBase != null) {
+        quantity = toBase(valueBase, base, "USD") / livePriceUsd;
+      }
+      if (livePriceUsd && quantity != null && valueBase == null) {
+        valueBase = toBase(quantity * livePriceUsd, "USD", base);
+      }
       addAsset({
-        kind: e.assetKind ?? "crypto",
-        symbol: e.symbol,
-        name: e.assetName ?? e.symbol ?? "Investment",
-        quantity: e.quantity,
-        value: e.amount ?? 0,
+        kind,
+        symbol,
+        name: e.assetName ?? resolvedName ?? symbol ?? "Investment",
+        quantity,
+        value: valueBase ?? 0,
+        costBasis: valueBase,
       });
-      addActivity("investment", `Added investment: ${e.symbol ?? e.assetName}.`);
-      reply = `Added ${e.quantity ?? ""} ${e.symbol ?? "investment"} to your portfolio.\nTracking live in your assets.`;
+      addActivity("investment", `Added investment: ${symbol ?? e.assetName}.`);
+      const valTxt = valueBase != null ? ` (${fmtMoney(valueBase, base)})` : "";
+      reply = `Added ${quantity ? quantity.toFixed(4).replace(/\.?0+$/, "") + " " : ""}${symbol ?? "investment"}${valTxt} to your portfolio.\nLive price tracked.`;
     } else {
       addTransaction({
         amount: 25,

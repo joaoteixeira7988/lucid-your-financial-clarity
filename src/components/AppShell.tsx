@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { AppHeader } from "./AppHeader";
 import { BottomNav } from "./BottomNav";
-import { useCryptoPrices } from "@/lib/usePrices";
+import { useMarketPrices } from "@/lib/market";
 
 export function AppShell({
   children,
@@ -11,8 +11,8 @@ export function AppShell({
   children: ReactNode;
   subtitle?: string;
 }) {
-  // Initialize live prices once at the shell level
-  useCryptoPrices();
+  // Refresh live market prices for every held investment.
+  useMarketPrices();
   const { pathname } = useLocation();
   return (
     <div className="relative min-h-screen pb-28">

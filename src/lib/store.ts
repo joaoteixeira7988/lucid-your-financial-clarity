@@ -24,6 +24,7 @@ type State = {
   activity: ActivityItem[];
   messages: ChatMessage[];
   cryptoPrices: Record<string, number>; // symbol -> USD price
+  stockPrices: Record<string, number>; // symbol -> USD price
   pricesLoadedAt?: string;
   onboardingComplete: boolean;
   /** The most recent action — powers inline correction on the AI response. */
@@ -50,6 +51,7 @@ type State = {
   addMessage: (m: Omit<ChatMessage, "id" | "date">) => ChatMessage;
   setLastAction: (a: State["lastAction"]) => void;
   setCryptoPrices: (p: Record<string, number>) => void;
+  setStockPrices: (p: Record<string, number>) => void;
   resetAll: () => void;
   seedDemo: () => void;
 };
@@ -130,6 +132,7 @@ export const useAppStore = create<State>()(
       activity: [],
       messages: [],
       cryptoPrices: {},
+      stockPrices: {},
       onboardingComplete: false,
 
       setBaseCurrency: (c) => set({ baseCurrency: c }),
@@ -191,6 +194,7 @@ export const useAppStore = create<State>()(
         return msg;
       },
       setCryptoPrices: (p) => set({ cryptoPrices: p, pricesLoadedAt: new Date().toISOString() }),
+      setStockPrices: (p) => set({ stockPrices: p, pricesLoadedAt: new Date().toISOString() }),
       setLastAction: (a) => set({ lastAction: a }),
 
       resetAll: () =>
@@ -228,6 +232,7 @@ export const useAppStore = create<State>()(
         goals: s.goals,
         activity: s.activity,
         cryptoPrices: s.cryptoPrices,
+        stockPrices: s.stockPrices,
         pricesLoadedAt: s.pricesLoadedAt,
       }),
       onRehydrateStorage: () => (state) => {
@@ -255,9 +260,19 @@ export const TANGIBLE_ASSET_KINDS = new Set<Asset["kind"]>([
 
 // --- Derived selectors ---
 
-export function getAssetValueInBase(asset: Asset, base: Currency, prices: Record<string, number>): number {
+export function getAssetValueInBase(
+  asset: Asset,
+  base: Currency,
+  prices: Record<string, number>,
+  stockPrices?: Record<string, number>
+): number {
   if (asset.kind === "crypto" && asset.symbol && asset.quantity != null) {
     const usd = (prices[asset.symbol] ?? 0) * asset.quantity;
+    if (usd > 0) return toBase(usd, "USD", base);
+    return asset.value || 0;
+  }
+  if (asset.kind === "stock" && asset.symbol && asset.quantity != null && stockPrices) {
+    const usd = (stockPrices[asset.symbol] ?? 0) * asset.quantity;
     if (usd > 0) return toBase(usd, "USD", base);
     return asset.value || 0;
   }
@@ -266,7 +281,7 @@ export function getAssetValueInBase(asset: Asset, base: Currency, prices: Record
 
 export function getNetWorth(state: State): number {
   const assetTotal = state.assets.reduce(
-    (s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices),
+    (s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices, state.stockPrices),
     0
   );
   const liabilityTotal = state.liabilities.reduce(
@@ -279,19 +294,19 @@ export function getNetWorth(state: State): number {
 export function getInvestmentValue(state: State): number {
   return state.assets
     .filter((a) => INVESTMENT_KINDS.has(a.kind))
-    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices), 0);
+    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices, state.stockPrices), 0);
 }
 
 export function getTangibleAssetValue(state: State): number {
   return state.assets
     .filter((a) => TANGIBLE_ASSET_KINDS.has(a.kind))
-    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices), 0);
+    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices, state.stockPrices), 0);
 }
 
 export function getCashTotal(state: State): number {
   return state.assets
     .filter((a) => CASH_KINDS.has(a.kind))
-    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices), 0);
+    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices, state.stockPrices), 0);
 }
 
 export function getSpendInRange(state: State, days: number): number {

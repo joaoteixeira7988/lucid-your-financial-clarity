@@ -95,7 +95,7 @@ function NetWorthPage() {
     Cash: 0, Savings: 0, Investments: 0, Property: 0, Vehicle: 0, Valuables: 0, Other: 0,
   };
   for (const a of state.assets) {
-    breakdown[CLASS_OF[a.kind]] += getAssetValueInBase(a, base, state.cryptoPrices);
+    breakdown[CLASS_OF[a.kind]] += getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
   }
 
   // Pull markers from recent activity for graph annotations.

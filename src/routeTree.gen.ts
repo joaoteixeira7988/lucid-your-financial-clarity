@@ -15,6 +15,7 @@ import { Route as NetWorthRouteImport } from './routes/net-worth'
 import { Route as InvestmentsRouteImport } from './routes/investments'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiQuoteRouteImport } from './routes/api/quote'
 import { Route as ApiParseRouteImport } from './routes/api/parse'
 
 const SpendingRoute = SpendingRouteImport.update({
@@ -47,6 +48,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiQuoteRoute = ApiQuoteRouteImport.update({
+  id: '/api/quote',
+  path: '/api/quote',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiParseRoute = ApiParseRouteImport.update({
   id: '/api/parse',
   path: '/api/parse',
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/portfolio': typeof PortfolioRoute
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
+  '/api/quote': typeof ApiQuoteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioRoute
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
+  '/api/quote': typeof ApiQuoteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/portfolio': typeof PortfolioRoute
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
+  '/api/quote': typeof ApiQuoteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/spending'
     | '/api/parse'
+    | '/api/quote'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/spending'
     | '/api/parse'
+    | '/api/quote'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/spending'
     | '/api/parse'
+    | '/api/quote'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   PortfolioRoute: typeof PortfolioRoute
   SpendingRoute: typeof SpendingRoute
   ApiParseRoute: typeof ApiParseRoute
+  ApiQuoteRoute: typeof ApiQuoteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/quote': {
+      id: '/api/quote'
+      path: '/api/quote'
+      fullPath: '/api/quote'
+      preLoaderRoute: typeof ApiQuoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/parse': {
       id: '/api/parse'
       path: '/api/parse'
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortfolioRoute: PortfolioRoute,
   SpendingRoute: SpendingRoute,
   ApiParseRoute: ApiParseRoute,
+  ApiQuoteRoute: ApiQuoteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
