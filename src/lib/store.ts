@@ -51,6 +51,7 @@ type State = {
   addMessage: (m: Omit<ChatMessage, "id" | "date">) => ChatMessage;
   setLastAction: (a: State["lastAction"]) => void;
   setCryptoPrices: (p: Record<string, number>) => void;
+  setStockPrices: (p: Record<string, number>) => void;
   resetAll: () => void;
   seedDemo: () => void;
 };
