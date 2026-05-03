@@ -7,12 +7,15 @@ import {
   getInvestmentValue,
   getTangibleAssetValue,
   getAssetValueInBase,
+  getNetWorth,
+  getCashTotal,
   TANGIBLE_ASSET_KINDS,
+  CASH_KINDS,
 } from "@/lib/store";
 import { fmtMoney, toBase } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import type { Asset, AssetKind } from "@/lib/types";
-import { Car, Home as HomeIcon, Gem, Laptop, Sofa, Package } from "lucide-react";
+import { Car, Home as HomeIcon, Gem, Laptop, Sofa, Package, Wallet, PiggyBank } from "lucide-react";
 
 export const Route = createFileRoute("/portfolio")({
   head: () => ({
@@ -48,11 +51,20 @@ const PALETTE = [
 ];
 
 function PortfolioPage() {
-  const [view, setView] = useState<"investments" | "assets">("investments");
+  const [view, setView] = useState<"investments" | "assets" | "cash">("investments");
   const state = useAppStore();
   const base = state.baseCurrency;
   const investTotal = getInvestmentValue(state);
   const assetTotal = getTangibleAssetValue(state);
+  const cashTotal = getCashTotal(state);
+  const netWorth = getNetWorth(state);
+
+  const cashOnly = state.assets
+    .filter((a) => a.kind === "cash")
+    .reduce((s, a) => s + getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices), 0);
+  const savingsOnly = state.assets
+    .filter((a) => a.kind === "savings")
+    .reduce((s, a) => s + getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices), 0);
 
   return (
     <AppShell subtitle="Portfolio">
@@ -60,9 +72,43 @@ function PortfolioPage() {
         <h1 className="text-[22px] font-semibold tracking-tight">Portfolio</h1>
       </div>
 
+      {/* Total — reconciles with Net Worth */}
+      <section className="lucid-card relative overflow-hidden p-5">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-70"
+          style={{
+            background:
+              "radial-gradient(120% 100% at 0% 0%, oklch(0.66 0.18 252 / 0.18) 0%, transparent 55%)",
+          }}
+        />
+        <div className="relative">
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            Total
+          </p>
+          <p className="tabular mt-1.5 text-[34px] font-semibold leading-none tracking-tight">
+            {fmtMoney(netWorth, base, { compact: true })}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-muted-foreground">
+            {cashOnly > 0 && (
+              <span>Cash <span className="tabular text-foreground/85">{fmtMoney(cashOnly, base, { compact: true })}</span></span>
+            )}
+            {savingsOnly > 0 && (
+              <span>· Savings <span className="tabular text-foreground/85">{fmtMoney(savingsOnly, base, { compact: true })}</span></span>
+            )}
+            {investTotal > 0 && (
+              <span>· Investments <span className="tabular text-foreground/85">{fmtMoney(investTotal, base, { compact: true })}</span></span>
+            )}
+            {assetTotal > 0 && (
+              <span>· Assets <span className="tabular text-foreground/85">{fmtMoney(assetTotal, base, { compact: true })}</span></span>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Segmented control */}
-      <div className="mb-4 grid grid-cols-2 rounded-xl border border-border bg-surface/60 p-0.5">
-        {(["investments", "assets"] as const).map((v) => (
+      <div className="my-4 grid grid-cols-3 rounded-xl border border-border bg-surface/60 p-0.5">
+        {(["investments", "assets", "cash"] as const).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
@@ -80,8 +126,10 @@ function PortfolioPage() {
 
       {view === "investments" ? (
         <InvestmentsView state={state} base={base} total={investTotal} />
-      ) : (
+      ) : view === "assets" ? (
         <AssetsView state={state} base={base} total={assetTotal} />
+      ) : (
+        <CashView state={state} base={base} total={cashTotal} />
       )}
     </AppShell>
   );
@@ -147,7 +195,7 @@ function InvestmentsView({
     <>
       <MetricCard
         prominent
-        label="Portfolio value"
+        label="Investments"
         value={fmtMoney(total, base, { compact: true })}
         delta={{ value: "+5.2%", positive: true }}
         hint={pricesLoaded ? "live prices · auto-refreshed" : "price pending"}
@@ -335,6 +383,65 @@ function AssetsView({
         Assets keep value over time. Use Lucid to track cars, property, watches, and other items
         that should count toward your net worth — separate from money you've spent.
       </p>
+    </>
+  );
+}
+
+function CashView({
+  state,
+  base,
+  total,
+}: {
+  state: ReturnType<typeof useAppStore.getState>;
+  base: ReturnType<typeof useAppStore.getState>["baseCurrency"];
+  total: number;
+}) {
+  const cashAssets: Asset[] = state.assets.filter((a) => CASH_KINDS.has(a.kind));
+
+  return (
+    <>
+      <MetricCard
+        prominent
+        label="Cash & savings"
+        value={fmtMoney(total, base, { compact: true })}
+        hint={`${cashAssets.length} account${cashAssets.length === 1 ? "" : "s"}`}
+      />
+
+      <section className="lucid-card mt-4 overflow-hidden">
+        <h2 className="border-b border-border px-5 py-3.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          Accounts
+        </h2>
+        <ul className="divide-y divide-border">
+          {cashAssets.map((a) => {
+            const Icon = a.kind === "savings" ? PiggyBank : Wallet;
+            const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
+            return (
+              <li key={a.id} className="flex items-center justify-between px-5 py-3.5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    aria-hidden
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-foreground"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[14px] font-medium text-foreground">{a.name}</p>
+                    <p className="text-[11px] capitalize text-muted-foreground">{a.kind}</p>
+                  </div>
+                </div>
+                <p className="tabular text-[14px] font-semibold text-foreground">
+                  {fmtMoney(value, base, { compact: true })}
+                </p>
+              </li>
+            );
+          })}
+          {cashAssets.length === 0 && (
+            <li className="px-5 py-8 text-center text-sm text-muted-foreground">
+              No cash accounts yet. Try “I have $5,000 in checking” or “Added 10k to savings”.
+            </li>
+          )}
+        </ul>
+      </section>
     </>
   );
 }
