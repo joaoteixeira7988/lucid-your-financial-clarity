@@ -8,6 +8,7 @@ import {
   getSpendInRange,
 } from "@/lib/store";
 import { parseMessageAI } from "@/lib/aiParser";
+import { fetchQuote } from "@/lib/market";
 import type { ParsedResult } from "@/lib/types";
 import { answerQuestion } from "@/lib/insights";
 import type { TxCategory } from "@/lib/types";
