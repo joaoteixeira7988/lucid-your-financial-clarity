@@ -136,6 +136,7 @@ export function ChatInput({
     } else if (result.intent === "investment_log") {
       setLastAction({ kind: "investment", at: new Date().toISOString() });
       for (const e of result.entries) {
+        console.log("INVESTMENT ENTRY:", JSON.stringify(e))
         console.log("[investment_log] parsed entry:", {
           quantity: e.quantity,
           amount: e.amount,
