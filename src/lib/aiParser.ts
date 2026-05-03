@@ -2,12 +2,6 @@ import type { ParsedResult, Currency, ParsedEntry, Intent, TxCategory, AssetKind
 import { parseMessage as parseMessageLocal } from "./parser";
 import { useAppStore, inferCategoryFromHistory } from "./store";
 
-/**
- * GPT-powered parser client. Calls /api/parse and normalizes the result
- * into the existing ParsedResult shape. Falls back to the rule-based
- * parser on network/credit errors so the app stays functional.
- */
-
 const CRYPTO_SYMBOLS = new Set([
   "BTC", "ETH", "SOL", "SUI", "ADA", "XRP", "DOGE", "MATIC", "DOT", "LINK",
   "AVAX", "BNB", "TRX", "LTC", "ATOM", "NEAR", "APT", "ARB", "OP", "INJ",
@@ -41,7 +35,6 @@ export async function parseMessageAI(
     });
 
     if (res.status === 429 || res.status === 402) {
-      // Rate limit / credits — fallback silently.
       return parseMessageLocal(text, baseCurrency);
     }
     if (!res.ok) {
@@ -50,6 +43,7 @@ export async function parseMessageAI(
     }
 
     const raw = (await res.json()) as RawResponse;
+    console.log("RAW API RESPONSE:", JSON.stringify(raw));
     return normalize(raw, text, baseCurrency);
   } catch (e) {
     console.warn("AI parser error, falling back:", e);
@@ -59,42 +53,50 @@ export async function parseMessageAI(
 
 function normalize(raw: RawResponse, text: string, baseCurrency: Currency): ParsedResult {
   let intent = raw.intent;
-  const entries: ParsedEntry[] = (raw.entries ?? []).map((e) => ({ ...e }));
+  const entries: ParsedEntry[] = (raw.entries ?? []).map((e) => {
+    const entry = { ...e };
+    // Fix: if this is a crypto entry with a symbol and the number before
+    // the symbol was misclassified as amount instead of quantity, correct it.
+    if (entry.symbol && CRYPTO_SYMBOLS.has(entry.symbol.toUpperCase())) {
+      const hasQuantity = entry.quantity != null;
+      const hasAmount = entry.amount != null;
+      if (!hasQuantity && hasAmount) {
+        const sym = entry.symbol.toUpperCase();
+        const quantityPattern = new RegExp(
+          `(\\d+\\.?\\d*)\\s*${sym}|${sym}\\s*(\\d+\\.?\\d*)`,
+          "i"
+        );
+        const currencyPattern = /dollar|usd|eur|gbp|aed|\$|€|£|worth|of/i;
+        const textBeforeSymbol = text.substring(0, text.toUpperCase().indexOf(sym));
+        if (quantityPattern.test(text) && !currencyPattern.test(textBeforeSymbol)) {
+          console.log(`Correcting: moving amount ${entry.amount} to quantity for ${sym}`);
+          entry.quantity = entry.amount;
+          entry.amount = undefined;
+        }
+      }
+    }
+    return entry;
+  });
 
-  // Safety guard: if any entry has a known crypto symbol, force investment_log
-  // and fix common parser mistake where unit quantity ends up in `amount`.
   const hasCrypto = entries.some(
     (e) => e.symbol && CRYPTO_SYMBOLS.has(e.symbol.toUpperCase())
   );
-  if (hasCrypto) {
-    if (intent !== "investment_log") intent = "investment_log";
+  if (hasCrypto && intent !== "investment_log") {
+    intent = "investment_log";
     entries.forEach((e) => {
       if (e.symbol && CRYPTO_SYMBOLS.has(e.symbol.toUpperCase())) {
         e.assetKind = "crypto";
         e.symbol = e.symbol.toUpperCase();
         if (!e.assetName) e.assetName = e.symbol;
-        // "bought 0.5 ETH" sometimes comes back as amount=0.5 with no quantity.
-        // If amount is small (< 1000) and quantity is missing, treat it as a unit quantity.
-        if (
-          (e.quantity == null) &&
-          e.amount != null &&
-          e.amount < 1000
-        ) {
-          e.quantity = e.amount;
-          e.amount = undefined;
-        }
       }
     });
   }
 
-
-  // Default currency on entries
   entries.forEach((e) => {
     if (!e.currency) e.currency = baseCurrency;
     e.source = "text";
   });
 
-  // Category inference fallback for vague expenses
   if (intent === "expense_log") {
     entries.forEach((e) => {
       if (!e.category || e.category === "Other") {
@@ -113,12 +115,10 @@ function normalize(raw: RawResponse, text: string, baseCurrency: Currency): Pars
     });
   }
 
-  // Date default
   entries.forEach((e) => {
     if (!e.date) e.date = new Date().toISOString();
   });
 
-  // Goal normalization
   let goal: ParsedResult["goal"];
   if (intent === "goal_create" && raw.goal) {
     const months = raw.goal.months ?? (raw.goal.timeframe === "year" ? 12 : raw.goal.timeframe === "week" ? 0.25 : 1);
@@ -134,7 +134,6 @@ function normalize(raw: RawResponse, text: string, baseCurrency: Currency): Pars
     };
   }
 
-  // Validation: amount required for log intents
   if (
     (intent === "expense_log" || intent === "income_log") &&
     !entries.some((e) => e.amount != null && e.amount > 0)
@@ -156,7 +155,6 @@ function normalize(raw: RawResponse, text: string, baseCurrency: Currency): Pars
     };
   }
 
-  // Asset kind defaulting
   if (intent === "asset_log") {
     entries.forEach((e) => {
       if (!e.assetKind) e.assetKind = "other" as AssetKind;
