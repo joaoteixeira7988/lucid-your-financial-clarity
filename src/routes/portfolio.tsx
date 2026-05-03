@@ -177,7 +177,7 @@ function InvestmentsView({
           </h2>
           <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-elevated">
             {investAssets.map((a, i) => {
-              const value = getAssetValueInBase(a, base, state.cryptoPrices);
+              const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
               const share = total > 0 ? (value / total) * 100 : 0;
               return (
                 <div
@@ -190,7 +190,7 @@ function InvestmentsView({
           </div>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground">
             {investAssets.slice(0, 5).map((a, i) => {
-              const value = getAssetValueInBase(a, base, state.cryptoPrices);
+              const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
               const share = total > 0 ? (value / total) * 100 : 0;
               return (
                 <span key={a.id} className="flex items-center gap-1.5">
@@ -236,7 +236,7 @@ function AssetsView({
         <ul className="divide-y divide-border">
           {tangibles.map((a) => {
             const Icon = ASSET_ICON[a.kind] ?? Package;
-            const value = getAssetValueInBase(a, base, state.cryptoPrices);
+            const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
             const change = a.costBasis
               ? ((value - a.costBasis) / a.costBasis) * 100
               : null;
