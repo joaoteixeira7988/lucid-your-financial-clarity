@@ -87,6 +87,48 @@ function PortfolioPage() {
   );
 }
 
+type GroupedHolding = {
+  key: string;
+  kind: "crypto" | "stock";
+  symbol?: string;
+  name: string;
+  quantity: number;
+  costBasis: number;
+  value: number;
+};
+
+function groupHoldings(
+  assets: Asset[],
+  base: ReturnType<typeof useAppStore.getState>["baseCurrency"],
+  cryptoPrices: Record<string, number>,
+  stockPrices: Record<string, number>
+): GroupedHolding[] {
+  const map = new Map<string, GroupedHolding>();
+  for (const a of assets) {
+    if (a.kind !== "crypto" && a.kind !== "stock") continue;
+    const sym = a.symbol?.toUpperCase();
+    const key = sym ? `${a.kind}:${sym}` : `${a.kind}:${a.id}`;
+    const value = getAssetValueInBase(a, base, cryptoPrices, stockPrices);
+    const existing = map.get(key);
+    if (existing) {
+      existing.quantity += a.quantity ?? 0;
+      existing.costBasis += a.costBasis ?? 0;
+      existing.value += value;
+    } else {
+      map.set(key, {
+        key,
+        kind: a.kind,
+        symbol: sym,
+        name: a.name,
+        quantity: a.quantity ?? 0,
+        costBasis: a.costBasis ?? 0,
+        value,
+      });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => b.value - a.value);
+}
+
 function InvestmentsView({
   state,
   base,
@@ -96,7 +138,7 @@ function InvestmentsView({
   base: ReturnType<typeof useAppStore.getState>["baseCurrency"];
   total: number;
 }) {
-  const investAssets = state.assets.filter((a) => a.kind === "crypto" || a.kind === "stock");
+  const holdings = groupHoldings(state.assets, base, state.cryptoPrices, state.stockPrices);
   const pricesLoaded =
     Object.keys(state.cryptoPrices).length > 0 ||
     Object.keys(state.stockPrices).length > 0;
