@@ -132,6 +132,7 @@ export const useAppStore = create<State>()(
       activity: [],
       messages: [],
       cryptoPrices: {},
+      stockPrices: {},
       onboardingComplete: false,
 
       setBaseCurrency: (c) => set({ baseCurrency: c }),
