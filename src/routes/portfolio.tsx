@@ -139,8 +139,10 @@ function InvestmentsView({
                   <div className="min-w-0">
                     <p className="truncate text-[14px] font-medium text-foreground">{a.name}</p>
                     <p className="tabular text-[11px] text-muted-foreground">
-                      {a.quantity != null && a.symbol ? `${a.quantity} ${a.symbol}` : a.kind}
-                      {priceInBase ? ` · ${fmtMoney(priceInBase, base)}` : ""}
+                      {a.quantity != null && a.symbol
+                        ? `${a.quantity.toFixed(6).replace(/\.?0+$/, "")} ${a.symbol}`
+                        : a.kind}
+                      {priceInBase ? ` · ${fmtMoney(priceInBase, base)}` : a.symbol ? " · price pending" : ""}
                     </p>
                   </div>
                 </div>
@@ -148,7 +150,14 @@ function InvestmentsView({
                   <p className="tabular text-[14px] font-semibold text-foreground">
                     {fmtMoney(value, base, { compact: true })}
                   </p>
-                  <p className="tabular text-[11px] text-muted-foreground">{share.toFixed(0)}%</p>
+                  <p className="tabular text-[11px] text-muted-foreground">
+                    {share.toFixed(0)}%
+                    {change !== null && (
+                      <span className={cn("ml-1.5", change >= 0 ? "text-success" : "text-destructive")}>
+                        {change >= 0 ? "+" : ""}{change.toFixed(1)}%
+                      </span>
+                    )}
+                  </p>
                 </div>
               </li>
             );
