@@ -1,10 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-/**
- * Server route: GPT-powered structured financial input parser.
- * Returns a normalized ParsedResult-shaped JSON via tool calling.
- */
-
 const SYSTEM_PROMPT = `You are Lucid's financial intent parser. The user types short natural-language messages about their money (expenses, income, assets, investments, goals, or questions). Your only job is to classify the intent and extract structured fields. Be precise.
 
 Rules:
@@ -23,56 +18,52 @@ For multiple items in one message ("0.4 ETH and 500 of BTC"), return multiple en
 Confidence: 0.9+ when clear, 0.7 when reasonable, <0.7 when ambiguous.`;
 
 const TOOL_SCHEMA = {
-  type: "function" as const,
-  function: {
-    name: "parse_financial_input",
-    description: "Extract structured financial intent and entries from user input.",
-    parameters: {
-      type: "object",
-      properties: {
-        intent: {
-          type: "string",
-          enum: ["expense_log", "income_log", "asset_log", "investment_log", "goal_create", "question", "unknown"],
-        },
-        confidence: { type: "number", minimum: 0, maximum: 1 },
-        entries: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              amount: { type: "number", description: "Monetary amount in the given currency" },
-              quantity: { type: "number", description: "Crypto/stock unit quantity (e.g. 0.5 ETH)" },
-              currency: { type: "string", enum: ["USD", "EUR", "GBP", "AED"] },
-              category: {
-                type: "string",
-                enum: ["Food", "Groceries", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Travel", "Income", "Other"],
-              },
-              merchant: { type: "string" },
-              symbol: { type: "string", description: "Ticker like BTC, ETH, SUI, AAPL" },
-              assetKind: {
-                type: "string",
-                enum: ["cash", "savings", "crypto", "stock", "vehicle", "property", "valuable", "electronics", "furniture", "other"],
-              },
-              assetName: { type: "string" },
-            },
-          },
-        },
-        goal: {
+  name: "parse_financial_input",
+  description: "Extract structured financial intent and entries from user input.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      intent: {
+        type: "string",
+        enum: ["expense_log", "income_log", "asset_log", "investment_log", "goal_create", "question", "unknown"],
+      },
+      confidence: { type: "number" },
+      entries: {
+        type: "array",
+        items: {
           type: "object",
           properties: {
-            title: { type: "string" },
-            type: { type: "string", enum: ["save", "spend_less", "net_worth"] },
-            targetAmount: { type: "number" },
-            timeframe: { type: "string", enum: ["week", "month", "year"] },
-            months: { type: "number", description: "Number of months until deadline" },
-            category: { type: "string" },
+            amount: { type: "number" },
+            quantity: { type: "number" },
+            currency: { type: "string", enum: ["USD", "EUR", "GBP", "AED"] },
+            category: {
+              type: "string",
+              enum: ["Food", "Groceries", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Travel", "Income", "Other"],
+            },
+            merchant: { type: "string" },
+            symbol: { type: "string" },
+            assetKind: {
+              type: "string",
+              enum: ["cash", "savings", "crypto", "stock", "vehicle", "property", "valuable", "electronics", "furniture", "other"],
+            },
+            assetName: { type: "string" },
           },
         },
-        reply: { type: "string", description: "Short, calm 1-sentence confirmation. Empty for questions." },
       },
-      required: ["intent", "confidence", "entries", "reply"],
-      additionalProperties: false,
+      goal: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          type: { type: "string", enum: ["save", "spend_less", "net_worth"] },
+          targetAmount: { type: "number" },
+          timeframe: { type: "string", enum: ["week", "month", "year"] },
+          months: { type: "number" },
+          category: { type: "string" },
+        },
+      },
+      reply: { type: "string" },
     },
+    required: ["intent", "confidence", "entries", "reply"],
   },
 };
 
@@ -85,46 +76,57 @@ export const Route = createFileRoute("/api/parse")({
             text: string;
             baseCurrency: string;
           };
+
           if (!text || typeof text !== "string") {
             return Response.json({ error: "Missing text" }, { status: 400 });
           }
 
-          const apiKey = process.env.LOVABLE_API_KEY;
+          const apiKey = process.env.ANTHROPIC_API_KEY;
           if (!apiKey) {
-            return Response.json({ error: "LOVABLE_API_KEY not configured" }, { status: 500 });
+            return Response.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
           }
 
-          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+              "content-type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
+              model: "claude-sonnet-4-20250514",
+              max_tokens: 1024,
+              system: SYSTEM_PROMPT,
               messages: [
-                { role: "system", content: SYSTEM_PROMPT },
-                { role: "user", content: `Base currency: ${baseCurrency || "USD"}\nInput: ${text}` },
+                {
+                  role: "user",
+                  content: `Base currency: ${baseCurrency || "USD"}\nInput: ${text}`,
+                },
               ],
               tools: [TOOL_SCHEMA],
-              tool_choice: { type: "function", function: { name: "parse_financial_input" } },
+              tool_choice: { type: "tool", name: "parse_financial_input" },
             }),
           });
 
           if (!res.ok) {
             const status = res.status;
             const body = await res.text();
-            console.error("AI gateway error:", status, body);
+            console.error("Anthropic API error:", status, body);
             return Response.json({ error: "ai_error", status }, { status });
           }
 
           const data = await res.json();
-          const call = data.choices?.[0]?.message?.tool_calls?.[0];
-          if (!call?.function?.arguments) {
+
+          // Claude returns tool use in content blocks
+          const toolUseBlock = data.content?.find(
+            (block: { type: string }) => block.type === "tool_use"
+          );
+
+          if (!toolUseBlock?.input) {
             return Response.json({ error: "no_tool_call" }, { status: 502 });
           }
-          const parsed = JSON.parse(call.function.arguments);
-          return Response.json(parsed);
+
+          return Response.json(toolUseBlock.input);
         } catch (e) {
           console.error("parse handler error:", e);
           return Response.json(
