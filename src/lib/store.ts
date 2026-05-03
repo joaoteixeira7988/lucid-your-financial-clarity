@@ -232,6 +232,7 @@ export const useAppStore = create<State>()(
         goals: s.goals,
         activity: s.activity,
         cryptoPrices: s.cryptoPrices,
+        stockPrices: s.stockPrices,
         pricesLoadedAt: s.pricesLoadedAt,
       }),
       onRehydrateStorage: () => (state) => {
