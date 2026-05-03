@@ -12,7 +12,7 @@ Rules:
 - "unknown": not financial.
 
 Amount parsing: "20k" = 20000, "1.5m" = 1500000, "300 eur" → amount=300 currency=EUR. "0.4 ETH" → quantity=0.4 symbol=ETH (no amount).
-For investment_log: if user says "X worth of SYM" or "X eur of SYM", it's amount in currency. If user says "add 0.5 ETH" or "have 2 BTC", it's quantity.
+For investment_log: CRITICAL — if a number appears directly before a crypto or stock symbol (e.g. '0.5 ETH', '2 BTC', '10 SOL'), it is ALWAYS a unit quantity, never a currency amount. Only treat a number as a currency amount if it is explicitly followed by a currency name or code (e.g. '500 dollars of ETH', '200 USD of BTC'). Examples: 'bought 0.5 ETH' → quantity=0.5 symbol=ETH. 'bought $500 of ETH' → amount=500 currency=USD.
 For multiple items in one message ("0.4 ETH and 500 of BTC"), return multiple entries.
 
 Confidence: 0.9+ when clear, 0.7 when reasonable, <0.7 when ambiguous.`;
