@@ -97,7 +97,9 @@ function InvestmentsView({
   total: number;
 }) {
   const investAssets = state.assets.filter((a) => a.kind === "crypto" || a.kind === "stock");
-  const pricesLoaded = Object.keys(state.cryptoPrices).length > 0;
+  const pricesLoaded =
+    Object.keys(state.cryptoPrices).length > 0 ||
+    Object.keys(state.stockPrices).length > 0;
 
   return (
     <>
@@ -106,7 +108,7 @@ function InvestmentsView({
         label="Portfolio value"
         value={fmtMoney(total, base, { compact: true })}
         delta={{ value: "+5.2%", positive: true }}
-        hint={pricesLoaded ? "live prices · 30d est." : "cached prices"}
+        hint={pricesLoaded ? "live prices · auto-refreshed" : "price pending"}
       />
 
       <section className="lucid-card mt-4 overflow-hidden">
@@ -115,10 +117,16 @@ function InvestmentsView({
         </h2>
         <ul className="divide-y divide-border">
           {investAssets.map((a) => {
-            const value = getAssetValueInBase(a, base, state.cryptoPrices);
+            const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
             const share = total > 0 ? (value / total) * 100 : 0;
-            const price = a.symbol ? state.cryptoPrices[a.symbol] : undefined;
-            const priceInBase = price ? toBase(price, "USD", base) : undefined;
+            const priceUsd = a.symbol
+              ? a.kind === "crypto"
+                ? state.cryptoPrices[a.symbol]
+                : state.stockPrices[a.symbol]
+              : undefined;
+            const priceInBase = priceUsd ? toBase(priceUsd, "USD", base) : undefined;
+            const change =
+              a.costBasis && value > 0 ? ((value - a.costBasis) / a.costBasis) * 100 : null;
             return (
               <li key={a.id} className="flex items-center justify-between px-5 py-3.5">
                 <div className="flex min-w-0 items-center gap-3">
