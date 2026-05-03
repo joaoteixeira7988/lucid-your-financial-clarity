@@ -195,7 +195,7 @@ function InvestmentsView({
     <>
       <MetricCard
         prominent
-        label="Portfolio value"
+        label="Investments"
         value={fmtMoney(total, base, { compact: true })}
         delta={{ value: "+5.2%", positive: true }}
         hint={pricesLoaded ? "live prices · auto-refreshed" : "price pending"}
