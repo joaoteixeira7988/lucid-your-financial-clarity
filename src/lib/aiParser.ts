@@ -55,23 +55,65 @@ function normalize(raw: RawResponse, text: string, baseCurrency: Currency): Pars
   let intent = raw.intent;
   const entries: ParsedEntry[] = (raw.entries ?? []).map((e) => {
     const entry = { ...e };
-    // Fix: if this is a crypto entry with a symbol and the number before
-    // the symbol was misclassified as amount instead of quantity, correct it.
+    // Fix: parser sometimes puts a unit quantity (e.g. "0.5" in "0.5 ETH")
+    // into the `amount` field. Detect this by looking at the original text
+    // for a number adjacent to the symbol with no nearby currency marker.
     if (entry.symbol && CRYPTO_SYMBOLS.has(entry.symbol.toUpperCase())) {
       const hasQuantity = entry.quantity != null;
       const hasAmount = entry.amount != null;
       if (!hasQuantity && hasAmount) {
         const sym = entry.symbol.toUpperCase();
-        const quantityPattern = new RegExp(
-          `(\\d+\\.?\\d*)\\s*${sym}|${sym}\\s*(\\d+\\.?\\d*)`,
+        // Match a number directly adjacent to the symbol in either order:
+        //   "0.5 ETH", "0,5 ETH", "1,234.56 ETH", "ETH 0.5"
+        // The number can use "." or "," as decimal/thousand separators.
+        const adjacent = new RegExp(
+          `(?:(\\d[\\d,.]*)\\s*${sym}\\b)|(?:\\b${sym}\\s*(\\d[\\d,.]*))`,
           "i"
         );
-        const currencyPattern = /dollar|usd|eur|gbp|aed|\$|€|£|worth|of/i;
-        const textBeforeSymbol = text.substring(0, text.toUpperCase().indexOf(sym));
-        if (quantityPattern.test(text) && !currencyPattern.test(textBeforeSymbol)) {
-          console.log(`Correcting: moving amount ${entry.amount} to quantity for ${sym}`);
-          entry.quantity = entry.amount;
-          entry.amount = undefined;
+        const match = text.match(adjacent);
+        if (match) {
+          const rawNum = match[1] ?? match[2] ?? "";
+          // Normalize: strip thousands separators, keep decimal point.
+          // Heuristic: if there's both "," and ".", treat "," as thousands.
+          // If only "," exists, treat the last one as decimal.
+          let normalized = rawNum;
+          if (rawNum.includes(",") && rawNum.includes(".")) {
+            normalized = rawNum.replace(/,/g, "");
+          } else if (rawNum.includes(",") && !rawNum.includes(".")) {
+            const parts = rawNum.split(",");
+            normalized =
+              parts.length === 2 && parts[1].length <= 2
+                ? parts.join(".")
+                : parts.join("");
+          }
+          const adjacentNum = parseFloat(normalized);
+
+          // Look at a small window around the matched number for currency cues.
+          const matchStart = match.index ?? 0;
+          const windowStart = Math.max(0, matchStart - 16);
+          const windowEnd = Math.min(text.length, matchStart + match[0].length + 16);
+          const window = text.slice(windowStart, windowEnd);
+          const currencyCue =
+            /\$|€|£|د\.إ|\b(usd|eur|gbp|aed|dollars?|euros?|pounds?|dirhams?|worth\s+of)\b/i;
+
+          const looksLikeQuantity =
+            Number.isFinite(adjacentNum) && !currencyCue.test(window);
+
+          // Only rewrite when the number we found in the text matches the
+          // amount the parser returned (within a small tolerance) — this
+          // avoids touching cases like "$500 of ETH" where amount=500.
+          const matchesAmount =
+            Number.isFinite(adjacentNum) &&
+            entry.amount != null &&
+            Math.abs(adjacentNum - entry.amount) < 1e-6;
+
+          if (looksLikeQuantity && matchesAmount) {
+            console.log(
+              `Correcting: moving amount ${entry.amount} to quantity for ${sym}`
+            );
+            entry.quantity = adjacentNum;
+            entry.amount = undefined;
+          }
         }
       }
     }
