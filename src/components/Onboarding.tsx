@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Sparkles, Target } from "lucide-react";
 import { useAppStore, getNetWorth, getSpendInRange } from "@/lib/store";
 import { parseMessageAI } from "@/lib/aiParser";
+import { fetchQuote } from "@/lib/market";
 import { toBase, fmtMoney } from "@/lib/currency";
 import type { TxCategory } from "@/lib/types";
 import { cn } from "@/lib/utils";
