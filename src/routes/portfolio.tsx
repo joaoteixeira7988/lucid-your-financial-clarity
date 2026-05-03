@@ -386,3 +386,62 @@ function AssetsView({
     </>
   );
 }
+
+function CashView({
+  state,
+  base,
+  total,
+}: {
+  state: ReturnType<typeof useAppStore.getState>;
+  base: ReturnType<typeof useAppStore.getState>["baseCurrency"];
+  total: number;
+}) {
+  const cashAssets: Asset[] = state.assets.filter((a) => CASH_KINDS.has(a.kind));
+
+  return (
+    <>
+      <MetricCard
+        prominent
+        label="Cash & savings"
+        value={fmtMoney(total, base, { compact: true })}
+        hint={`${cashAssets.length} account${cashAssets.length === 1 ? "" : "s"}`}
+      />
+
+      <section className="lucid-card mt-4 overflow-hidden">
+        <h2 className="border-b border-border px-5 py-3.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          Accounts
+        </h2>
+        <ul className="divide-y divide-border">
+          {cashAssets.map((a) => {
+            const Icon = a.kind === "savings" ? PiggyBank : Wallet;
+            const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
+            return (
+              <li key={a.id} className="flex items-center justify-between px-5 py-3.5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    aria-hidden
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-foreground"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[14px] font-medium text-foreground">{a.name}</p>
+                    <p className="text-[11px] capitalize text-muted-foreground">{a.kind}</p>
+                  </div>
+                </div>
+                <p className="tabular text-[14px] font-semibold text-foreground">
+                  {fmtMoney(value, base, { compact: true })}
+                </p>
+              </li>
+            );
+          })}
+          {cashAssets.length === 0 && (
+            <li className="px-5 py-8 text-center text-sm text-muted-foreground">
+              No cash accounts yet. Try “I have $5,000 in checking” or “Added 10k to savings”.
+            </li>
+          )}
+        </ul>
+      </section>
+    </>
+  );
+}
