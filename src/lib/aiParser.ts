@@ -61,20 +61,32 @@ function normalize(raw: RawResponse, text: string, baseCurrency: Currency): Pars
   let intent = raw.intent;
   const entries: ParsedEntry[] = (raw.entries ?? []).map((e) => ({ ...e }));
 
-  // Safety guard: if any entry has a known crypto symbol, force investment_log.
+  // Safety guard: if any entry has a known crypto symbol, force investment_log
+  // and fix common parser mistake where unit quantity ends up in `amount`.
   const hasCrypto = entries.some(
     (e) => e.symbol && CRYPTO_SYMBOLS.has(e.symbol.toUpperCase())
   );
-  if (hasCrypto && intent !== "investment_log") {
-    intent = "investment_log";
+  if (hasCrypto) {
+    if (intent !== "investment_log") intent = "investment_log";
     entries.forEach((e) => {
       if (e.symbol && CRYPTO_SYMBOLS.has(e.symbol.toUpperCase())) {
         e.assetKind = "crypto";
         e.symbol = e.symbol.toUpperCase();
         if (!e.assetName) e.assetName = e.symbol;
+        // "bought 0.5 ETH" sometimes comes back as amount=0.5 with no quantity.
+        // If amount is small (< 1000) and quantity is missing, treat it as a unit quantity.
+        if (
+          (e.quantity == null) &&
+          e.amount != null &&
+          e.amount < 1000
+        ) {
+          e.quantity = e.amount;
+          e.amount = undefined;
+        }
       }
     });
   }
+
 
   // Default currency on entries
   entries.forEach((e) => {
