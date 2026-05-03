@@ -134,25 +134,58 @@ export function ChatInput({
       });
     } else if (result.intent === "investment_log") {
       setLastAction({ kind: "investment", at: new Date().toISOString() });
-      result.entries.forEach((e) => {
-        addAsset({
-          kind: e.assetKind ?? "stock",
-          symbol: e.symbol,
-          name: e.assetName ?? "Investment",
-          quantity: e.quantity,
-          value: e.amount ?? 0,
-          costBasis: e.amount,
-        });
-        const label =
-          e.quantity != null && e.symbol
-            ? `Added investment: ${e.quantity} ${e.symbol}.`
-            : `Added investment: ${e.symbol ?? e.assetName ?? "Investment"} (${formatBase(toBase(e.amount ?? 0, e.currency ?? baseCurrency, baseCurrency), baseCurrency)}).`;
-        if (e.amount != null) {
-          const baseAmt = toBase(e.amount, e.currency ?? baseCurrency, baseCurrency);
-          adjustCash(-baseAmt);
+      for (const e of result.entries) {
+        const kind: "crypto" | "stock" =
+          e.assetKind === "stock" ? "stock" : "crypto";
+        const symbol = e.symbol?.toUpperCase();
+
+        let livePriceUsd: number | undefined;
+        let resolvedName: string | undefined;
+        if (symbol) {
+          const quote = await fetchQuote(symbol, kind);
+          livePriceUsd = quote?.price;
+          resolvedName = quote?.name;
         }
+
+        let quantity = e.quantity;
+        let purchaseValueBase: number | undefined =
+          e.amount != null
+            ? toBase(e.amount, e.currency ?? baseCurrency, baseCurrency)
+            : undefined;
+
+        if (livePriceUsd && quantity == null && purchaseValueBase != null) {
+          const usdValue = toBase(purchaseValueBase, baseCurrency, "USD");
+          quantity = usdValue / livePriceUsd;
+        }
+        if (livePriceUsd && quantity != null && purchaseValueBase == null) {
+          const usdValue = quantity * livePriceUsd;
+          purchaseValueBase = toBase(usdValue, "USD", baseCurrency);
+        }
+
+        addAsset({
+          kind,
+          symbol,
+          name: e.assetName ?? resolvedName ?? symbol ?? "Investment",
+          quantity,
+          value: purchaseValueBase ?? 0,
+          costBasis: purchaseValueBase,
+        });
+        if (purchaseValueBase != null) adjustCash(-purchaseValueBase);
+
+        const valLabel =
+          purchaseValueBase != null
+            ? formatBase(purchaseValueBase, baseCurrency)
+            : null;
+        const qtyLabel = quantity != null
+          ? quantity.toFixed(6).replace(/\.?0+$/, "")
+          : null;
+        const label =
+          qtyLabel && symbol
+            ? `Added ${qtyLabel} ${symbol}${valLabel ? ` (${valLabel})` : ""}.`
+            : `Added ${symbol ?? e.assetName ?? "investment"}${valLabel ? ` (${valLabel})` : ""}.`;
         addActivity("investment", label);
-      });
+      }
+
     } else if (result.intent === "asset_log") {
       setLastAction({ kind: "asset", at: new Date().toISOString() });
       result.entries.forEach((e) => {
