@@ -7,8 +7,12 @@ import {
   getInvestmentValue,
   getTangibleAssetValue,
   getAssetValueInBase,
+  getNetWorth,
+  getCashTotal,
   TANGIBLE_ASSET_KINDS,
+  CASH_KINDS,
 } from "@/lib/store";
+import { Wallet, PiggyBank } from "lucide-react";
 import { fmtMoney, toBase } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import type { Asset, AssetKind } from "@/lib/types";
