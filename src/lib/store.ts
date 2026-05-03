@@ -260,9 +260,19 @@ export const TANGIBLE_ASSET_KINDS = new Set<Asset["kind"]>([
 
 // --- Derived selectors ---
 
-export function getAssetValueInBase(asset: Asset, base: Currency, prices: Record<string, number>): number {
+export function getAssetValueInBase(
+  asset: Asset,
+  base: Currency,
+  prices: Record<string, number>,
+  stockPrices?: Record<string, number>
+): number {
   if (asset.kind === "crypto" && asset.symbol && asset.quantity != null) {
     const usd = (prices[asset.symbol] ?? 0) * asset.quantity;
+    if (usd > 0) return toBase(usd, "USD", base);
+    return asset.value || 0;
+  }
+  if (asset.kind === "stock" && asset.symbol && asset.quantity != null && stockPrices) {
+    const usd = (stockPrices[asset.symbol] ?? 0) * asset.quantity;
     if (usd > 0) return toBase(usd, "USD", base);
     return asset.value || 0;
   }
@@ -271,7 +281,7 @@ export function getAssetValueInBase(asset: Asset, base: Currency, prices: Record
 
 export function getNetWorth(state: State): number {
   const assetTotal = state.assets.reduce(
-    (s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices),
+    (s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices, state.stockPrices),
     0
   );
   const liabilityTotal = state.liabilities.reduce(
@@ -284,19 +294,19 @@ export function getNetWorth(state: State): number {
 export function getInvestmentValue(state: State): number {
   return state.assets
     .filter((a) => INVESTMENT_KINDS.has(a.kind))
-    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices), 0);
+    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices, state.stockPrices), 0);
 }
 
 export function getTangibleAssetValue(state: State): number {
   return state.assets
     .filter((a) => TANGIBLE_ASSET_KINDS.has(a.kind))
-    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices), 0);
+    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices, state.stockPrices), 0);
 }
 
 export function getCashTotal(state: State): number {
   return state.assets
     .filter((a) => CASH_KINDS.has(a.kind))
-    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices), 0);
+    .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices, state.stockPrices), 0);
 }
 
 export function getSpendInRange(state: State, days: number): number {
