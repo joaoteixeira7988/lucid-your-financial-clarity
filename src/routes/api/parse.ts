@@ -103,7 +103,7 @@ export const Route = createFileRoute("/api/parse")({
               "content-type": "application/json",
             },
             body: JSON.stringify({
-              model: "claude-sonnet-4-20250514",
+              model: "claude-3-5-sonnet-latest",
               max_tokens: 1024,
               system: SYSTEM_PROMPT,
               messages: [
