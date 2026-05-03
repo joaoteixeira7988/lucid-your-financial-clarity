@@ -136,6 +136,13 @@ export function ChatInput({
     } else if (result.intent === "investment_log") {
       setLastAction({ kind: "investment", at: new Date().toISOString() });
       for (const e of result.entries) {
+        console.log("[investment_log] parsed entry:", {
+          quantity: e.quantity,
+          amount: e.amount,
+          symbol: e.symbol,
+          currency: e.currency,
+          assetKind: e.assetKind,
+        });
         const kind: "crypto" | "stock" =
           e.assetKind === "stock" ? "stock" : "crypto";
         const symbol = e.symbol?.toUpperCase();
@@ -149,8 +156,12 @@ export function ChatInput({
         }
 
         let quantity = e.quantity;
+        // If parser gave us both quantity and symbol (e.g. "0.5 ETH"),
+        // ignore any amount field — it's a duplicate of the quantity, not
+        // a currency-denominated purchase value.
+        const hasUnitQuantity = quantity != null && !!symbol;
         let purchaseValueBase: number | undefined =
-          e.amount != null
+          !hasUnitQuantity && e.amount != null
             ? toBase(e.amount, e.currency ?? baseCurrency, baseCurrency)
             : undefined;
 
@@ -162,6 +173,7 @@ export function ChatInput({
           const usdValue = quantity * livePriceUsd;
           purchaseValueBase = toBase(usdValue, "USD", baseCurrency);
         }
+
 
         addAsset({
           kind,
