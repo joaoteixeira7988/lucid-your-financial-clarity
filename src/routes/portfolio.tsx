@@ -158,39 +158,41 @@ function InvestmentsView({
           Holdings
         </h2>
         <ul className="divide-y divide-border">
-          {investAssets.map((a) => {
-            const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
-            const share = total > 0 ? (value / total) * 100 : 0;
-            const priceUsd = a.symbol
-              ? a.kind === "crypto"
-                ? state.cryptoPrices[a.symbol]
-                : state.stockPrices[a.symbol]
+          {holdings.map((h) => {
+            const share = total > 0 ? (h.value / total) * 100 : 0;
+            const priceUsd = h.symbol
+              ? h.kind === "crypto"
+                ? state.cryptoPrices[h.symbol]
+                : state.stockPrices[h.symbol]
               : undefined;
             const priceInBase = priceUsd ? toBase(priceUsd, "USD", base) : undefined;
             const change =
-              a.costBasis && value > 0 ? ((value - a.costBasis) / a.costBasis) * 100 : null;
+              h.costBasis > 0 && h.value > 0
+                ? ((h.value - h.costBasis) / h.costBasis) * 100
+                : null;
+            const pl = h.costBasis > 0 ? h.value - h.costBasis : null;
             return (
-              <li key={a.id} className="flex items-center justify-between px-5 py-3.5">
+              <li key={h.key} className="flex items-center justify-between px-5 py-3.5">
                 <div className="flex min-w-0 items-center gap-3">
                   <span
                     aria-hidden
                     className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-[12px] font-bold tracking-tight text-foreground"
                   >
-                    {a.symbol?.slice(0, 3) ?? "AST"}
+                    {h.symbol?.slice(0, 3) ?? "AST"}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-[14px] font-medium text-foreground">{a.name}</p>
+                    <p className="truncate text-[14px] font-medium text-foreground">{h.name}</p>
                     <p className="tabular text-[11px] text-muted-foreground">
-                      {a.quantity != null && a.symbol
-                        ? `${a.quantity.toFixed(6).replace(/\.?0+$/, "")} ${a.symbol}`
-                        : a.kind}
-                      {priceInBase ? ` · ${fmtMoney(priceInBase, base)}` : a.symbol ? " · price pending" : ""}
+                      {h.quantity > 0 && h.symbol
+                        ? `${h.quantity.toFixed(6).replace(/\.?0+$/, "")} ${h.symbol}`
+                        : h.kind}
+                      {priceInBase ? ` · ${fmtMoney(priceInBase, base)}` : h.symbol ? " · price pending" : ""}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="tabular text-[14px] font-semibold text-foreground">
-                    {fmtMoney(value, base, { compact: true })}
+                    {fmtMoney(h.value, base, { compact: true })}
                   </p>
                   <p className="tabular text-[11px] text-muted-foreground">
                     {share.toFixed(0)}%
@@ -199,12 +201,17 @@ function InvestmentsView({
                         {change >= 0 ? "+" : ""}{change.toFixed(1)}%
                       </span>
                     )}
+                    {pl !== null && (
+                      <span className={cn("ml-1.5", pl >= 0 ? "text-success" : "text-destructive")}>
+                        {pl >= 0 ? "+" : "−"}{fmtMoney(Math.abs(pl), base, { compact: true })}
+                      </span>
+                    )}
                   </p>
                 </div>
               </li>
             );
           })}
-          {investAssets.length === 0 && (
+          {holdings.length === 0 && (
             <li className="px-5 py-8 text-center text-sm text-muted-foreground">
               No holdings yet. Try “Add 0.2 ETH” or “Bought $500 of BTC”.
             </li>
@@ -212,35 +219,33 @@ function InvestmentsView({
         </ul>
       </section>
 
-      {investAssets.length > 0 && (
+      {holdings.length > 0 && (
         <section className="lucid-card mt-4 p-5">
           <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
             Allocation
           </h2>
           <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-elevated">
-            {investAssets.map((a, i) => {
-              const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
-              const share = total > 0 ? (value / total) * 100 : 0;
+            {holdings.map((h, i) => {
+              const share = total > 0 ? (h.value / total) * 100 : 0;
               return (
                 <div
-                  key={a.id}
+                  key={h.key}
                   style={{ width: `${share}%`, backgroundColor: PALETTE[i % PALETTE.length] }}
-                  title={`${a.symbol ?? a.name} ${share.toFixed(0)}%`}
+                  title={`${h.symbol ?? h.name} ${share.toFixed(0)}%`}
                 />
               );
             })}
           </div>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground">
-            {investAssets.slice(0, 5).map((a, i) => {
-              const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
-              const share = total > 0 ? (value / total) * 100 : 0;
+            {holdings.slice(0, 5).map((h, i) => {
+              const share = total > 0 ? (h.value / total) * 100 : 0;
               return (
-                <span key={a.id} className="flex items-center gap-1.5">
+                <span key={h.key} className="flex items-center gap-1.5">
                   <span
                     className="h-2 w-2 rounded-full"
                     style={{ backgroundColor: PALETTE[i % PALETTE.length] }}
                   />
-                  {a.symbol ?? a.name} {share.toFixed(0)}%
+                  {h.symbol ?? h.name} {share.toFixed(0)}%
                 </span>
               );
             })}
