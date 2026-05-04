@@ -72,6 +72,7 @@ function RootComponent() {
       <AuthGate>
         <Outlet />
       </AuthGate>
+      <Toaster position="top-center" />
     </AuthProvider>
   );
 }
