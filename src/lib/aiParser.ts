@@ -77,7 +77,7 @@ function normalize(raw: RawResponse, text: string, baseCurrency: Currency): Pars
     // Fix: parser sometimes puts a unit quantity (e.g. "0.5" in "0.5 ETH")
     // into the `amount` field. Detect this by looking at the original text
     // for a number adjacent to the symbol with no nearby currency marker.
-    if (entry.symbol && CRYPTO_SYMBOLS.has(entry.symbol.toUpperCase())) {
+    if (entry.symbol && classifySymbol(entry.symbol) !== null) {
       const hasQuantity = entry.quantity != null;
       const hasAmount = entry.amount != null;
       if (!hasQuantity && hasAmount) {
