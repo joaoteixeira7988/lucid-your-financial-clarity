@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp } from "lucide-react";
+import { LucidMark } from "@/components/LucidMark";
 import {
   useAppStore,
   getCategorySpend,
