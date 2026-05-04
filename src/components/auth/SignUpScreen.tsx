@@ -78,8 +78,8 @@ function RootView({ onApple, onEmail, err }: { onApple: () => void; onEmail: () 
   return (
     <>
       <div className="flex flex-1 flex-col items-center justify-center text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
-          <LucidMark size={28} stroke="#ffffff" fill="#ffffff" />
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/15">
+          <LucidMark size={36} stroke="#ffffff" fill="#ffffff" />
         </div>
         <h1 className="mt-5 text-[28px] font-semibold tracking-tight">Lucid</h1>
         <p className="mt-1.5 text-[14px] text-muted-foreground">Your financial clarity</p>
