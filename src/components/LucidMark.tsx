@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 export function LucidMark({
   size = 32,
   className,
-  stroke = "#5B8DEF",
-  fill = "#5B8DEF",
+  stroke = "#ffffff",
+  fill = "#ffffff",
 }: {
   size?: number;
   className?: string;
