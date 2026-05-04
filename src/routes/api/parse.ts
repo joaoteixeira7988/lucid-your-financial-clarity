@@ -58,6 +58,7 @@ const TOOL_SCHEMA = {
               enum: ["cash", "savings", "crypto", "stock", "vehicle", "property", "valuable", "electronics", "furniture", "other"],
             },
             assetName: { type: "string" },
+            isNewPurchase: { type: "boolean", description: "True only if user explicitly says they just bought/purchased the asset now. False if they already own it." },
           },
         },
       },
