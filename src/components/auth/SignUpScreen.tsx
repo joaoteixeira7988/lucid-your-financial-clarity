@@ -79,7 +79,7 @@ function RootView({ onApple, onEmail, err }: { onApple: () => void; onEmail: () 
     <>
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full" style={{ backgroundColor: "#5B8DEF" }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 80 80" aria-hidden>
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 80 80" aria-hidden>
             <polygon points="40,8 64,22 64,50 40,64 16,50 16,22" fill="none" stroke="white" strokeWidth="3" />
             <polygon points="40,18 56,28 56,48 40,58 24,48 24,28" fill="none" stroke="white" strokeWidth="2" />
             <circle cx="40" cy="38" r="5" fill="white" />
