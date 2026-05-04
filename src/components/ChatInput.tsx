@@ -380,7 +380,9 @@ function composeReply(
     if (e.assetKind === "cash" || e.assetKind === "savings") {
       return `Added ${fmtMoney(amt, base)} to ${name.toLowerCase()}. Cash balance updated.`;
     }
-    return `Added asset: ${name} (${fmtMoney(amt, base)}). Cash adjusted — net worth remains stable.`;
+    return e.isNewPurchase
+      ? `Added asset: ${name} (${fmtMoney(amt, base)}). Cash adjusted — net worth remains stable.`
+      : `Added asset: ${name} (${fmtMoney(amt, base)}). Net worth increased.`;
   }
 
   if (result.intent === "investment_log" && result.entries[0]) {
