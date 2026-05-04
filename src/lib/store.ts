@@ -160,17 +160,45 @@ export const useAppStore = create<State>()(
       deleteTransaction: (id) => {
         set((s) => {
           const tx = s.transactions.find((t) => t.id === id);
-          if (!tx) return s;
+          if (!tx) return {} as Partial<State>;
           const label = tx.merchant ?? tx.category;
           return {
             transactions: s.transactions.filter((t) => t.id !== id),
             activity: [
-              { id: uid(), kind: "system", text: `Deleted transaction: ${label}.`, date: new Date().toISOString() },
+              { id: uid(), kind: "system" as ActivityKind, text: `Deleted ${label}.`, date: new Date().toISOString() },
               ...s.activity,
             ].slice(0, 80),
           };
         });
       },
+      deleteAsset: (id) => {
+        set((s) => {
+          const a = s.assets.find((x) => x.id === id);
+          if (!a) return {} as Partial<State>;
+          return {
+            assets: s.assets.filter((x) => x.id !== id),
+            activity: [
+              { id: uid(), kind: "system" as ActivityKind, text: `Deleted ${a.name}.`, date: new Date().toISOString() },
+              ...s.activity,
+            ].slice(0, 80),
+          };
+        });
+      },
+      deleteLiability: (id) => {
+        set((s) => {
+          const l = s.liabilities.find((x) => x.id === id);
+          if (!l) return {} as Partial<State>;
+          return {
+            liabilities: s.liabilities.filter((x) => x.id !== id),
+            activity: [
+              { id: uid(), kind: "system" as ActivityKind, text: `Deleted ${l.name}.`, date: new Date().toISOString() },
+              ...s.activity,
+            ].slice(0, 80),
+          };
+        });
+      },
+      deleteActivity: (id) =>
+        set((s) => ({ activity: s.activity.filter((a) => a.id !== id) })),
       adjustCash: (deltaInBase) => {
         const s = get();
         const cash = s.assets.find((a) => a.kind === "cash");
