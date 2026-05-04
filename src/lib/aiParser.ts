@@ -139,19 +139,25 @@ function normalize(raw: RawResponse, text: string, baseCurrency: Currency): Pars
     return entry;
   });
 
-  const hasCrypto = entries.some(
-    (e) => e.symbol && CRYPTO_SYMBOLS.has(e.symbol.toUpperCase())
-  );
-  if (hasCrypto && intent !== "investment_log") {
+  // Classify any symbol as crypto or stock and promote to investment_log.
+  const hasInvestment = entries.some((e) => classifySymbol(e.symbol) !== null);
+  if (hasInvestment && intent !== "investment_log") {
     intent = "investment_log";
+  }
+  if (intent === "investment_log") {
     entries.forEach((e) => {
-      if (e.symbol && CRYPTO_SYMBOLS.has(e.symbol.toUpperCase())) {
-        e.assetKind = "crypto";
+      const kind = classifySymbol(e.symbol);
+      if (kind && e.symbol) {
+        // Respect AI-provided assetKind if it's crypto/stock; otherwise infer.
+        if (e.assetKind !== "crypto" && e.assetKind !== "stock") {
+          e.assetKind = kind;
+        }
         e.symbol = e.symbol.toUpperCase();
         if (!e.assetName) e.assetName = e.symbol;
       }
     });
   }
+
 
   entries.forEach((e) => {
     if (!e.currency) e.currency = baseCurrency;
