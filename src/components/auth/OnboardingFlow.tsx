@@ -24,7 +24,7 @@ export function OnboardingFlow() {
   async function savePersonalisation(skip = false) {
     if (!user) return;
     setSaving(true);
-    const payload: Record<string, unknown> = { base_currency: currency };
+    const payload: { base_currency: string; name?: string } = { base_currency: currency };
     if (!skip && name.trim()) payload.name = name.trim();
     await supabase.from("profiles").update(payload).eq("id", user.id);
     setBaseCurrency(currency);
