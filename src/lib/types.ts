@@ -120,6 +120,8 @@ export type ParsedEntry = {
   /** True when category was inferred from past behavior, not text. */
   categoryInferred?: boolean;
   source?: EntrySource;
+  /** True only when the user explicitly says they just bought/purchased the asset now. */
+  isNewPurchase?: boolean;
 };
 
 export type ParsedResult = {
