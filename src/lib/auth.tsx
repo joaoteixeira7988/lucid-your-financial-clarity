@@ -45,6 +45,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Handle magic link callback: tokens arrive in URL hash (#access_token=...&refresh_token=...)
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    if (hash && hash.includes("access_token=")) {
+      const params = new URLSearchParams(hash.slice(1));
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+      if (access_token && refresh_token) {
+        supabase.auth.setSession({ access_token, refresh_token }).finally(() => {
+          // Clean URL so we don't re-process or leak tokens
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        });
+      }
+    }
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
       if (sess?.user) {
