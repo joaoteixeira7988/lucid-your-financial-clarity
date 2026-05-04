@@ -2,11 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { MetricCard } from "@/components/MetricCard";
+import { SwipeRow } from "@/components/SwipeRow";
 import { useAppStore, getCategorySpend, getSpendInRange } from "@/lib/store";
 import { fmtMoney } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toBase } from "@/lib/currency";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/spending")({
   head: () => ({
