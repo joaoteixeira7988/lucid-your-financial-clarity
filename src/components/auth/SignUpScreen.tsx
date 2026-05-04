@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, Mail, Sparkles } from "lucide-react";
+import { LucidMark } from "@/components/LucidMark";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { cn } from "@/lib/utils";
