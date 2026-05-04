@@ -222,42 +222,59 @@ function InvestmentsView({
                 : null;
             const pl = h.costBasis > 0 ? h.value - h.costBasis : null;
             return (
-              <li key={h.key} className="flex items-center justify-between px-5 py-3.5">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span
-                    aria-hidden
-                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-[12px] font-bold tracking-tight text-foreground"
-                  >
-                    {h.symbol?.slice(0, 3) ?? "AST"}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-[14px] font-medium text-foreground">{h.name}</p>
-                    <p className="tabular text-[11px] text-muted-foreground">
-                      {h.quantity > 0 && h.symbol
-                        ? `${h.quantity.toFixed(6).replace(/\.?0+$/, "")} ${h.symbol}`
-                        : h.kind}
-                      {priceInBase ? ` · ${fmtMoney(priceInBase, base)}` : h.symbol ? " · price pending" : ""}
-                    </p>
+              <li key={h.key}>
+                <SwipeRow
+                  onDelete={() => {
+                    // Delete every underlying asset row that maps to this group.
+                    state.assets
+                      .filter((a) => {
+                        if (a.kind !== h.kind) return false;
+                        return h.symbol
+                          ? a.symbol?.toUpperCase() === h.symbol
+                          : true;
+                      })
+                      .forEach((a) => state.deleteAsset(a.id));
+                    toast("Entry deleted");
+                  }}
+                >
+                  <div className="flex items-center justify-between px-5 py-3.5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span
+                        aria-hidden
+                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-[12px] font-bold tracking-tight text-foreground"
+                      >
+                        {h.symbol?.slice(0, 3) ?? "AST"}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[14px] font-medium text-foreground">{h.name}</p>
+                        <p className="tabular text-[11px] text-muted-foreground">
+                          {h.quantity > 0 && h.symbol
+                            ? `${h.quantity.toFixed(6).replace(/\.?0+$/, "")} ${h.symbol}`
+                            : h.kind}
+                          {priceInBase ? ` · ${fmtMoney(priceInBase, base)}` : h.symbol ? " · price pending" : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="tabular text-[14px] font-semibold text-foreground">
+                        {fmtMoney(h.value, base, { compact: true })}
+                      </p>
+                      <p className="tabular text-[11px] text-muted-foreground">
+                        {share.toFixed(0)}%
+                        {change !== null && (
+                          <span className={cn("ml-1.5", change >= 0 ? "text-success" : "text-destructive")}>
+                            {change >= 0 ? "+" : ""}{change.toFixed(1)}%
+                          </span>
+                        )}
+                        {pl !== null && (
+                          <span className={cn("ml-1.5", pl >= 0 ? "text-success" : "text-destructive")}>
+                            {pl >= 0 ? "+" : "−"}{fmtMoney(Math.abs(pl), base, { compact: true })}
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="tabular text-[14px] font-semibold text-foreground">
-                    {fmtMoney(h.value, base, { compact: true })}
-                  </p>
-                  <p className="tabular text-[11px] text-muted-foreground">
-                    {share.toFixed(0)}%
-                    {change !== null && (
-                      <span className={cn("ml-1.5", change >= 0 ? "text-success" : "text-destructive")}>
-                        {change >= 0 ? "+" : ""}{change.toFixed(1)}%
-                      </span>
-                    )}
-                    {pl !== null && (
-                      <span className={cn("ml-1.5", pl >= 0 ? "text-success" : "text-destructive")}>
-                        {pl >= 0 ? "+" : "−"}{fmtMoney(Math.abs(pl), base, { compact: true })}
-                      </span>
-                    )}
-                  </p>
-                </div>
+                </SwipeRow>
               </li>
             );
           })}
