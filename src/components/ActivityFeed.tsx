@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ActivityItem } from "@/lib/types";
+import { SwipeRow } from "./SwipeRow";
+import { toast } from "sonner";
 
 const ICONS: Record<ActivityItem["kind"], React.ComponentType<{ className?: string }>> = {
   expense: ArrowDownRight,
@@ -47,6 +49,7 @@ function relTime(iso: string): string {
 
 export function ActivityFeed() {
   const activity = useAppStore((s) => s.activity);
+  const deleteActivity = useAppStore((s) => s.deleteActivity);
   const items = activity.slice(0, 8);
 
   if (items.length === 0) return null;
@@ -71,21 +74,30 @@ export function ActivityFeed() {
           return (
             <li
               key={item.id}
-              className="lucid-rise-sm flex items-start gap-2.5"
+              className="lucid-rise-sm"
               style={{ animationDelay: `${Math.min(idx, 4) * 35 + 60}ms` }}
             >
-              <span
-                className={cn(
-                  "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md opacity-80",
-                  colors
-                )}
+              <SwipeRow
+                onDelete={() => {
+                  deleteActivity(item.id);
+                  toast("Entry deleted");
+                }}
               >
-                <Icon className="h-3 w-3" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[12.5px] leading-snug text-muted-foreground">{item.text}</p>
-                <p className="mt-0.5 text-[10px] text-muted-foreground/60">{relTime(item.date)}</p>
-              </div>
+                <div className="flex items-start gap-2.5 py-0.5 pr-2">
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md opacity-80",
+                      colors
+                    )}
+                  >
+                    <Icon className="h-3 w-3" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] leading-snug text-muted-foreground">{item.text}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/60">{relTime(item.date)}</p>
+                  </div>
+                </div>
+              </SwipeRow>
             </li>
           );
         })}

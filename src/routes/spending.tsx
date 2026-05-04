@@ -2,11 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { MetricCard } from "@/components/MetricCard";
+import { SwipeRow } from "@/components/SwipeRow";
 import { useAppStore, getCategorySpend, getSpendInRange } from "@/lib/store";
 import { fmtMoney } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toBase } from "@/lib/currency";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/spending")({
   head: () => ({
@@ -123,18 +125,27 @@ function SpendingPage() {
         </h2>
         <ul className="divide-y divide-border">
           {recent.map((t) => (
-            <li key={t.id} className="flex items-center justify-between px-5 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-[13.5px] font-medium text-foreground">
-                  {t.merchant ?? t.category}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {t.category} · {format(new Date(t.date), "MMM d")}
-                </p>
-              </div>
-              <span className="tabular text-[14px] font-semibold text-foreground">
-                −{fmtMoney(toBase(t.amount, t.currency, base), base)}
-              </span>
+            <li key={t.id} className="bg-surface/0">
+              <SwipeRow
+                onDelete={() => {
+                  state.deleteTransaction(t.id);
+                  toast("Entry deleted");
+                }}
+              >
+                <div className="flex items-center justify-between px-5 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-[13.5px] font-medium text-foreground">
+                      {t.merchant ?? t.category}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {t.category} · {format(new Date(t.date), "MMM d")}
+                    </p>
+                  </div>
+                  <span className="tabular text-[14px] font-semibold text-foreground">
+                    −{fmtMoney(toBase(t.amount, t.currency, base), base)}
+                  </span>
+                </div>
+              </SwipeRow>
             </li>
           ))}
           {recent.length === 0 && (
