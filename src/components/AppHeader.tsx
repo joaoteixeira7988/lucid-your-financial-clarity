@@ -18,7 +18,7 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
             className="relative flex h-8 w-8 items-center justify-center rounded-lg"
             style={{ background: "var(--gradient-primary)" }}
           >
-            <LucidMark size={28} stroke="#ffffff" fill="#ffffff" />
+            <LucidMark size={22} stroke="#ffffff" fill="#ffffff" />
             <span className="absolute -inset-px rounded-lg ring-1 ring-inset ring-white/10" />
           </span>
           <div className="flex flex-col leading-none">
