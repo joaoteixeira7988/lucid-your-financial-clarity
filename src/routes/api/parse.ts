@@ -8,6 +8,8 @@ investment_log: cryptocurrencies (BTC, ETH, SOL, SUI, ADA, XRP, DOGE, MATIC, DOT
 
 asset_log: items that retain value — car, house, watch, jewelry, gold, electronics, furniture, cash, savings deposit.
 
+CRITICAL asset ownership rule: When logging an asset, set isNewPurchase=true ONLY if the user explicitly indicates they JUST bought/purchased/acquired it now (e.g. "I just bought", "I bought a", "I purchased", "just got", "just picked up"). If the user says they already own it or are stating its value (e.g. "I have a PC worth 1000", "my car is worth 20000", "I own a watch valued at 5000", "add my laptop"), set isNewPurchase=false — they already own it, do not deduct from cash.
+
 expense_log: consumption — food, transport, bills, shopping, entertainment.
 
 income_log: salary, paycheck, client paid, freelance income.
