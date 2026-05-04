@@ -344,6 +344,58 @@ function NetWorthPage() {
           <p className="pt-1 text-[14.5px] leading-snug text-foreground/95">{position.line}</p>
         </div>
       </section>
+
+      {/* Assets list — deletable */}
+      <section className="lucid-card mt-4 overflow-hidden">
+        <h2 className="border-b border-border px-5 py-3.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          Assets
+        </h2>
+        <ul className="divide-y divide-border">
+          {state.assets.map((a) => {
+            const v = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
+            return (
+              <li key={a.id}>
+                <SwipeRow onDelete={() => { state.deleteAsset(a.id); toast("Entry deleted"); }}>
+                  <div className="flex items-center justify-between px-5 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-[13.5px] font-medium text-foreground">{a.name}</p>
+                      <p className="text-[11px] capitalize text-muted-foreground">{a.kind}</p>
+                    </div>
+                    <span className="tabular text-[13.5px] font-semibold text-foreground">
+                      {fmtMoney(v, base, { compact: true })}
+                    </span>
+                  </div>
+                </SwipeRow>
+              </li>
+            );
+          })}
+          {state.assets.length === 0 && (
+            <li className="px-5 py-6 text-center text-sm text-muted-foreground">No assets yet.</li>
+          )}
+        </ul>
+      </section>
+
+      {state.liabilities.length > 0 && (
+        <section className="lucid-card mt-4 overflow-hidden">
+          <h2 className="border-b border-border px-5 py-3.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            Liabilities
+          </h2>
+          <ul className="divide-y divide-border">
+            {state.liabilities.map((l) => (
+              <li key={l.id}>
+                <SwipeRow onDelete={() => { state.deleteLiability(l.id); toast("Entry deleted"); }}>
+                  <div className="flex items-center justify-between px-5 py-3">
+                    <p className="text-[13.5px] font-medium text-foreground">{l.name}</p>
+                    <span className="tabular text-[13.5px] font-semibold text-destructive">
+                      −{fmtMoney(toBase(l.amount, l.currency, base), base, { compact: true })}
+                    </span>
+                  </div>
+                </SwipeRow>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </AppShell>
   );
 }
