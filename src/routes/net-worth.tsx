@@ -22,7 +22,6 @@ import {
 import type { AssetKind } from "@/lib/types";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { SwipeRow } from "@/components/SwipeRow";
-import { fmtMoney as _fm } from "@/lib/currency";
 import { toBase } from "@/lib/currency";
 import { toast } from "sonner";
 
