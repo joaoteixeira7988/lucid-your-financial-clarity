@@ -4,7 +4,7 @@ import { MetricCard } from "@/components/MetricCard";
 import { ChatInput } from "@/components/ChatInput";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { AIResponse } from "@/components/AIResponse";
-import { Onboarding } from "@/components/Onboarding";
+
 import { useAppStore, getNetWorth, getInvestmentValue, getSpendInRange } from "@/lib/store";
 import { useDailyInsight } from "@/lib/insights";
 import { fmtMoney } from "@/lib/currency";
@@ -32,9 +32,8 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const state = useAppStore();
   const base = state.baseCurrency;
-  const insight = useDailyInsight();
   const hasEngaged = state.messages.length > 0;
-  const showOnboarding = !state.onboardingComplete && !hasEngaged;
+  const insight = useDailyInsight();
 
   const nw = getNetWorth(state);
   const today = getSpendInRange(state, 1);
@@ -46,7 +45,6 @@ function HomePage() {
 
   return (
     <AppShell subtitle="Good to see you">
-      {showOnboarding && <Onboarding />}
       <h1 className="sr-only">Lucid — Home</h1>
       {/* Hero metric */}
       <div className="grid gap-3">
