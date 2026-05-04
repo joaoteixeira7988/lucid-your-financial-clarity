@@ -8,6 +8,25 @@ const CRYPTO_SYMBOLS = new Set([
   "TON", "SHIB", "PEPE", "UNI", "AAVE", "FIL",
 ]);
 
+const STOCK_SYMBOLS = new Set([
+  "AAPL", "TSLA", "MSFT", "GOOGL", "GOOG", "AMZN", "META", "NVDA", "NFLX",
+  "BABA", "AMD", "INTC", "ORCL", "CRM", "ADBE", "PYPL", "DIS", "BA", "JPM",
+  "V", "MA", "WMT", "KO", "PEP", "MCD", "NKE", "SBUX", "UBER", "LYFT",
+  "SHOP", "SQ", "PLTR", "SNOW", "COIN", "RBLX", "SPOT", "ABNB", "F", "GM",
+  "T", "VZ", "XOM", "CVX", "BRK.B",
+]);
+
+function classifySymbol(sym: string | undefined): "crypto" | "stock" | null {
+  if (!sym) return null;
+  const u = sym.toUpperCase();
+  if (CRYPTO_SYMBOLS.has(u)) return "crypto";
+  if (STOCK_SYMBOLS.has(u)) return "stock";
+  // Heuristic: 1-5 uppercase letters not in crypto list → likely stock ticker.
+  if (/^[A-Z]{1,5}(\.[A-Z])?$/.test(u)) return "stock";
+  return null;
+}
+
+
 type RawResponse = {
   intent: Intent;
   confidence: number;
