@@ -42,12 +42,16 @@ type State = {
   completeOnboarding: () => void;
   addTransaction: (t: Omit<Transaction, "id">) => Transaction;
   updateTransaction: (id: string, patch: Partial<Transaction>) => void;
+  deleteTransaction: (id: string) => void;
   addAsset: (a: Omit<Asset, "id" | "createdAt">) => Asset;
+  deleteAsset: (id: string) => void;
   /** Adjust the value of the first cash asset, or create one. Returns new cash total in base. */
   adjustCash: (deltaInBase: number) => number;
   addLiability: (l: Omit<Liability, "id" | "createdAt">) => Liability;
+  deleteLiability: (id: string) => void;
   addGoal: (g: Omit<Goal, "id" | "createdAt">) => Goal;
   addActivity: (kind: ActivityKind, text: string) => void;
+  deleteActivity: (id: string) => void;
   addMessage: (m: Omit<ChatMessage, "id" | "date">) => ChatMessage;
   setLastAction: (a: State["lastAction"]) => void;
   setCryptoPrices: (p: Record<string, number>) => void;
