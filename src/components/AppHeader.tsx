@@ -1,7 +1,7 @@
 import { useAppStore } from "@/lib/store";
 import type { Currency } from "@/lib/types";
-import { Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { LucidMark } from "@/components/LucidMark";
 
 const CURRENCIES: Currency[] = ["USD", "EUR", "GBP", "AED"];
 
