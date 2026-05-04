@@ -148,15 +148,15 @@ function normalize(raw: RawResponse, text: string, baseCurrency: Currency): Pars
     entries.forEach((e) => {
       const kind = classifySymbol(e.symbol);
       if (kind && e.symbol) {
-        // Respect AI-provided assetKind if it's crypto/stock; otherwise infer.
-        if (e.assetKind !== "crypto" && e.assetKind !== "stock") {
-          e.assetKind = kind;
-        }
+        // Always trust the symbol-based classification — the AI sometimes
+        // mislabels stock tickers (e.g. AAPL) as crypto.
+        e.assetKind = kind;
         e.symbol = e.symbol.toUpperCase();
         if (!e.assetName) e.assetName = e.symbol;
       }
     });
   }
+
 
 
   entries.forEach((e) => {
