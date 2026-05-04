@@ -157,6 +157,20 @@ export const useAppStore = create<State>()(
         set((s) => ({ assets: [asset, ...s.assets] }));
         return asset;
       },
+      deleteTransaction: (id) => {
+        set((s) => {
+          const tx = s.transactions.find((t) => t.id === id);
+          if (!tx) return s;
+          const label = tx.merchant ?? tx.category;
+          return {
+            transactions: s.transactions.filter((t) => t.id !== id),
+            activity: [
+              { id: uid(), kind: "system", text: `Deleted transaction: ${label}.`, date: new Date().toISOString() },
+              ...s.activity,
+            ].slice(0, 80),
+          };
+        });
+      },
       adjustCash: (deltaInBase) => {
         const s = get();
         const cash = s.assets.find((a) => a.kind === "cash");
