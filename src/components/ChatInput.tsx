@@ -218,7 +218,7 @@ export function ChatInput({
             value: baseAmt,
             costBasis: baseAmt,
           });
-          adjustCash(-baseAmt);
+          if (e.isNewPurchase) adjustCash(-baseAmt);
           addActivity(
             "asset",
             `Added asset: ${e.assetName ?? "Asset"} (${formatBase(baseAmt, baseCurrency)}).`
