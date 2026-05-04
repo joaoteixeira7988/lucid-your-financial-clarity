@@ -32,6 +32,7 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const state = useAppStore();
   const base = state.baseCurrency;
+  const hasEngaged = state.messages.length > 0;
   const insight = useDailyInsight();
 
   const nw = getNetWorth(state);
