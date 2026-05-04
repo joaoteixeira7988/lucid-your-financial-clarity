@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ActivityItem } from "@/lib/types";
+import { SwipeRow } from "./SwipeRow";
+import { toast } from "sonner";
 
 const ICONS: Record<ActivityItem["kind"], React.ComponentType<{ className?: string }>> = {
   expense: ArrowDownRight,
