@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp } from "lucide-react";
+import { LucidMark } from "@/components/LucidMark";
 import {
   useAppStore,
   getCategorySpend,
@@ -292,11 +293,9 @@ export function ChatInput({
           pulsing && "scale-[0.992] opacity-90"
         )}
       >
-        <Sparkles
-          className={cn(
-            "flex-shrink-0 text-primary",
-            isHero ? "mb-3.5 h-[18px] w-[18px]" : "mb-2.5 h-4 w-4"
-          )}
+        <LucidMark
+          size={18}
+          className={cn(isHero ? "mb-3.5" : "mb-2.5")}
         />
         <textarea
           ref={inputRef}
