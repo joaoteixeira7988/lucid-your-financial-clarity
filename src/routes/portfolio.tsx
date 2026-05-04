@@ -355,38 +355,33 @@ function AssetsView({
               ? ((value - a.costBasis) / a.costBasis) * 100
               : null;
             return (
-              <li key={a.id} className="flex items-center justify-between px-5 py-3.5">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span
-                    aria-hidden
-                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-foreground"
-                  >
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-[14px] font-medium text-foreground">{a.name}</p>
-                    <p className="text-[11px] capitalize text-muted-foreground">
-                      {a.kind}
-                      {a.costBasis ? ` · cost ${fmtMoney(a.costBasis, base, { compact: true })}` : ""}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="tabular text-[14px] font-semibold text-foreground">
-                    {fmtMoney(value, base, { compact: true })}
-                  </p>
-                  {change !== null && (
-                    <p
-                      className={cn(
-                        "tabular text-[11px]",
-                        change >= 0 ? "text-success" : "text-destructive"
+              <li key={a.id}>
+                <SwipeRow onDelete={() => { state.deleteAsset(a.id); toast("Entry deleted"); }}>
+                  <div className="flex items-center justify-between px-5 py-3.5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span aria-hidden className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-foreground">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[14px] font-medium text-foreground">{a.name}</p>
+                        <p className="text-[11px] capitalize text-muted-foreground">
+                          {a.kind}
+                          {a.costBasis ? ` · cost ${fmtMoney(a.costBasis, base, { compact: true })}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="tabular text-[14px] font-semibold text-foreground">
+                        {fmtMoney(value, base, { compact: true })}
+                      </p>
+                      {change !== null && (
+                        <p className={cn("tabular text-[11px]", change >= 0 ? "text-success" : "text-destructive")}>
+                          {change >= 0 ? "+" : ""}{change.toFixed(1)}%
+                        </p>
                       )}
-                    >
-                      {change >= 0 ? "+" : ""}
-                      {change.toFixed(1)}%
-                    </p>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                </SwipeRow>
               </li>
             );
           })}
