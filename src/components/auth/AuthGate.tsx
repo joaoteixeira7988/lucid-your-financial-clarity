@@ -36,7 +36,20 @@ function SplashLoader() {
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const { loading, session, profile } = useAuth();
+  const [guest, setGuest] = useState(false);
 
+  useEffect(() => {
+    setGuest(isGuestMode());
+    const onChange = () => setGuest(isGuestMode());
+    window.addEventListener("lucid:guest-mode-changed", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("lucid:guest-mode-changed", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, []);
+
+  if (guest) return <>{children}</>;
   if (loading) return <SplashLoader />;
   if (!session) return <SignUpScreen />;
   if (!profile) return <SplashLoader />;
