@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, Mail, Sparkles } from "lucide-react";
 import { LucidMark } from "@/components/LucidMark";
+import { enableGuestMode } from "./AuthGate";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { cn } from "@/lib/utils";
@@ -117,6 +118,15 @@ function RootView({ onApple, onEmail, err }: { onApple: () => void; onEmail: () 
         >
           <Mail className="h-[18px] w-[18px]" />
           Continue with email
+        </button>
+
+        <button
+          type="button"
+          onClick={() => enableGuestMode()}
+          className="flex w-full flex-col items-center justify-center gap-0.5 pt-2 pb-1 text-[13px] text-muted-foreground/80 transition hover:text-foreground"
+        >
+          <span>Continue as guest</span>
+          <span className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/60">For testing only</span>
         </button>
 
         <p className="pt-5 text-center text-[11.5px] leading-relaxed text-muted-foreground">

@@ -1,8 +1,27 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { LucidMark } from "@/components/LucidMark";
 import { SignUpScreen } from "./SignUpScreen";
 import { OnboardingFlow } from "./OnboardingFlow";
+
+const GUEST_KEY = "lucid:guest-mode";
+
+export function isGuestMode() {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(GUEST_KEY) === "1";
+}
+
+export function enableGuestMode() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(GUEST_KEY, "1");
+  window.dispatchEvent(new Event("lucid:guest-mode-changed"));
+}
+
+export function disableGuestMode() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(GUEST_KEY);
+  window.dispatchEvent(new Event("lucid:guest-mode-changed"));
+}
 
 function SplashLoader() {
   return (
@@ -17,7 +36,20 @@ function SplashLoader() {
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const { loading, session, profile } = useAuth();
+  const [guest, setGuest] = useState(false);
 
+  useEffect(() => {
+    setGuest(isGuestMode());
+    const onChange = () => setGuest(isGuestMode());
+    window.addEventListener("lucid:guest-mode-changed", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("lucid:guest-mode-changed", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, []);
+
+  if (guest) return <>{children}</>;
   if (loading) return <SplashLoader />;
   if (!session) return <SignUpScreen />;
   if (!profile) return <SplashLoader />;
