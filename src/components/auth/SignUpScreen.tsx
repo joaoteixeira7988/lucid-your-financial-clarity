@@ -120,6 +120,15 @@ function RootView({ onApple, onEmail, err }: { onApple: () => void; onEmail: () 
           Continue with email
         </button>
 
+        <button
+          type="button"
+          onClick={() => enableGuestMode()}
+          className="flex w-full flex-col items-center justify-center gap-0.5 pt-2 pb-1 text-[13px] text-muted-foreground/80 transition hover:text-foreground"
+        >
+          <span>Continue as guest</span>
+          <span className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/60">For testing only</span>
+        </button>
+
         <p className="pt-5 text-center text-[11.5px] leading-relaxed text-muted-foreground">
           Your data is encrypted and never sold.
           <br />
