@@ -4,7 +4,7 @@ export const CURRENCY_SYMBOL: Record<Currency, string> = {
   USD: "$",
   EUR: "€",
   GBP: "£",
-  AED: "د.إ",
+  AED: "AED ",
 };
 
 // Static FX rates relative to USD (demo). Real app would fetch live.
