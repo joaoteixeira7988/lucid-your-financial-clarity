@@ -241,9 +241,9 @@ function InvestmentsView({
                     <div className="flex min-w-0 items-center gap-3">
                       <span
                         aria-hidden
-                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-[12px] font-bold tracking-tight text-foreground"
+                        className="flex h-9 min-w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-elevated px-1.5 text-[11px] font-bold tracking-tight text-foreground"
                       >
-                        {h.symbol?.slice(0, 3) ?? "AST"}
+                        {h.symbol ?? "AST"}
                       </span>
                       <div className="min-w-0">
                         <p className="truncate text-[14px] font-medium text-foreground">{h.name}</p>
