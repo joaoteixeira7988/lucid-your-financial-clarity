@@ -18,40 +18,37 @@ const TTL_MS = 60_000;
 type Entry = { price: number; at: number };
 const cache = new Map<string, Entry>();
 
-const STATIC_IDS: Record<string, string> = {
-  BTC: "bitcoin", ETH: "ethereum", SOL: "solana", SUI: "sui",
-  XLM: "stellar", ADA: "cardano", XRP: "ripple", DOGE: "dogecoin",
-  MATIC: "matic-network", DOT: "polkadot", LINK: "chainlink",
-  AVAX: "avalanche-2", BNB: "binancecoin", TRX: "tron", LTC: "litecoin",
-  ATOM: "cosmos", NEAR: "near", APT: "aptos", ARB: "arbitrum",
-  OP: "optimism", INJ: "injective-protocol", TON: "the-open-network",
-  SHIB: "shiba-inu", PEPE: "pepe", UNI: "uniswap", AAVE: "aave",
-  FIL: "filecoin", HBAR: "hedera-hashgraph", ALGO: "algorand",
-  XMR: "monero", ETC: "ethereum-classic", FTM: "fantom", VET: "vechain",
-  SAND: "the-sandbox", MANA: "decentraland", AXS: "axie-infinity",
-  CRO: "crypto-com-chain", TIA: "celestia",
-};
-
-async function fetchCoinGecko(symbols: string[]): Promise<Record<string, number>> {
-  const ids = symbols.map((s) => STATIC_IDS[s]).filter(Boolean);
-  if (!ids.length) return {};
+/**
+ * Coinbase spot price for one symbol.
+ *   GET https://api.coinbase.com/v2/prices/{SYMBOL}-USD/spot
+ *   → { data: { amount: "2118.95", base: "ETH", currency: "USD" } }
+ * Uses ticker symbols directly — no ID mapping needed.
+ */
+async function fetchCoinbaseOne(symbol: string): Promise<number | null> {
   try {
     const r = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(",")}&vs_currencies=usd`,
+      `https://api.coinbase.com/v2/prices/${encodeURIComponent(symbol)}-USD/spot`,
       { headers: { accept: "application/json", "user-agent": "lucid-app/1.0" } },
     );
-    if (!r.ok) return {};
-    const data = (await r.json()) as Record<string, { usd?: number }>;
-    const out: Record<string, number> = {};
-    for (const sym of symbols) {
-      const id = STATIC_IDS[sym];
-      const p = id ? data[id]?.usd : undefined;
-      if (typeof p === "number") out[sym] = p;
-    }
-    return out;
+    if (!r.ok) return null;
+    const data = (await r.json()) as { data?: { amount?: string } };
+    const amt = data?.data?.amount;
+    const n = amt != null ? Number(amt) : NaN;
+    return Number.isFinite(n) && n > 0 ? n : null;
   } catch {
-    return {};
+    return null;
   }
+}
+
+async function fetchCoinbase(symbols: string[]): Promise<Record<string, number>> {
+  if (!symbols.length) return {};
+  const results = await Promise.all(symbols.map((s) => fetchCoinbaseOne(s)));
+  const out: Record<string, number> = {};
+  symbols.forEach((sym, i) => {
+    const p = results[i];
+    if (typeof p === "number") out[sym] = p;
+  });
+  return out;
 }
 
 async function fetchCryptoCompare(symbols: string[]): Promise<Record<string, number>> {
@@ -110,13 +107,13 @@ export const Route = createFileRoute("/api/prices")({
           console.log("[/api/prices] requested:", upper, "missing:", missing);
 
           if (missing.length) {
-            const cg = await fetchCoinGecko(missing);
-            console.log("[/api/prices] coingecko returned:", cg);
-            const stillMissing = missing.filter((s) => !(s in cg));
+            const cb = await fetchCoinbase(missing);
+            console.log("[/api/prices] coinbase returned:", cb);
+            const stillMissing = missing.filter((s) => !(s in cb));
             const cc = stillMissing.length ? await fetchCryptoCompare(stillMissing) : {};
             if (stillMissing.length) console.log("[/api/prices] cryptocompare returned:", cc);
             for (const sym of missing) {
-              const price = cg[sym] ?? cc[sym];
+              const price = cb[sym] ?? cc[sym];
               if (typeof price === "number") {
                 result[sym] = price;
                 cache.set(sym, { price, at: now });
