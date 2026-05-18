@@ -91,6 +91,9 @@ export type ActivityItem = {
   kind: ActivityKind;
   text: string;
   date: string;
+  /** Optional link to the source entity (transaction / asset / liability id)
+   *  so the activity item is removed when the source entry is deleted. */
+  entityId?: string;
 };
 
 export type ChatMessage = {
