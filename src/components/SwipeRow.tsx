@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
  *    to the far right inside reserved padding (`pr-12`) so it never
  *    overlaps any text or numbers in the row.
  */
-const REVEAL = 88;
+const REVEAL = 64;
 
 function isTouchDevice() {
   if (typeof window === "undefined") return false;
