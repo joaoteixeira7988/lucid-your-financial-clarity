@@ -17,14 +17,16 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Lucid is a calm, intelligent personal finance app. Talk naturally — Lucid logs, organizes, and explains your money.",
+          "Lucid is a calm, intelligent personal finance app. Talk naturally — Lucid logs, organizes, and explains your money in seconds.",
       },
       { property: "og:title", content: "Lucid — Your financial autopilot" },
       {
         property: "og:description",
-        content: "Stop tracking money manually. Just talk to Lucid.",
+        content: "Stop tracking money manually. Just talk to Lucid — it logs spending, tracks investments, and shows your real net worth.",
       },
+      { property: "og:url", content: "https://lucidfinance.dev/" },
     ],
+    links: [{ rel: "canonical", href: "https://lucidfinance.dev/" }],
   }),
   component: HomePage,
 });
