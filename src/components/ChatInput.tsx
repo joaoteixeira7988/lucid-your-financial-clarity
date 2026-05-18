@@ -147,7 +147,13 @@ export function ChatInput({
         });
         const kind: "crypto" | "stock" =
           e.assetKind === "stock" ? "stock" : "crypto";
-        const symbol = e.symbol?.toUpperCase();
+        // Fall back to assetName when the parser didn't surface an explicit
+        // symbol but the name itself looks like a ticker (e.g. "BTC").
+        let symbol = e.symbol?.toUpperCase();
+        if (!symbol && e.assetName) {
+          const candidate = e.assetName.trim().toUpperCase();
+          if (/^[A-Z]{1,5}$/.test(candidate)) symbol = candidate;
+        }
 
         let livePriceUsd: number | undefined;
         let resolvedName: string | undefined;
@@ -191,7 +197,10 @@ export function ChatInput({
           currency: "USD",
           costBasis: purchaseValueUsd,
         });
-        if (purchaseValueBase != null) adjustCash(-purchaseValueBase);
+        // Only deduct cash for explicit new purchases. Statements like
+        // "I have 20k of BTC" or "I own 2 ETH" describe existing holdings —
+        // don't touch the cash balance in that case.
+        if (purchaseValueBase != null && e.isNewPurchase) adjustCash(-purchaseValueBase);
 
         const valLabel =
           purchaseValueBase != null
