@@ -10,45 +10,68 @@ import { createFileRoute } from "@tanstack/react-router";
  * proxying through this server route, the outbound request happens from
  * the Worker — no CORS, consistent behavior across desktop and mobile.
  *
- * Strategy: CoinGecko first (best coverage), CryptoCompare as fallback,
- * with a 60s in-process cache to throttle outbound calls.
+ * Strategy: CoinGecko (primary, proxied server-side to avoid CORS),
+ * with CryptoCompare as a fallback for any symbol CoinGecko doesn't return.
+ * 60s in-process cache to throttle outbound calls.
  */
 
 const TTL_MS = 60_000;
 type Entry = { price: number; at: number };
 const cache = new Map<string, Entry>();
 
+/** Ticker symbol → CoinGecko coin ID. */
+const SYMBOL_TO_COINGECKO_ID: Record<string, string> = {
+  BTC: "bitcoin",
+  ETH: "ethereum",
+  SOL: "solana",
+  ADA: "cardano",
+  XLM: "stellar",
+  SUI: "sui",
+  XRP: "ripple",
+  DOGE: "dogecoin",
+  MATIC: "matic-network",
+  DOT: "polkadot",
+  LINK: "chainlink",
+  AVAX: "avalanche-2",
+  BNB: "binancecoin",
+  ATOM: "cosmos",
+  NEAR: "near",
+  UNI: "uniswap",
+  AAVE: "aave",
+  SHIB: "shiba-inu",
+  TON: "the-open-network",
+  PEPE: "pepe",
+};
+
 /**
- * Coinbase spot price for one symbol.
- *   GET https://api.coinbase.com/v2/prices/{SYMBOL}-USD/spot
- *   → { data: { amount: "2118.95", base: "ETH", currency: "USD" } }
- * Uses ticker symbols directly — no ID mapping needed.
+ * CoinGecko simple price lookup for many symbols at once.
+ *   GET /api/v3/simple/price?ids={a,b,c}&vs_currencies=usd
+ *   → { [coinId]: { usd: number } }
  */
-async function fetchCoinbaseOne(symbol: string): Promise<number | null> {
+async function fetchCoinGecko(symbols: string[]): Promise<Record<string, number>> {
+  if (!symbols.length) return {};
+  // Build symbol→id pairs only for symbols we know
+  const pairs = symbols
+    .map((sym) => [sym, SYMBOL_TO_COINGECKO_ID[sym]] as const)
+    .filter(([, id]) => Boolean(id));
+  if (!pairs.length) return {};
+  const ids = pairs.map(([, id]) => id).join(",");
   try {
     const r = await fetch(
-      `https://api.coinbase.com/v2/prices/${encodeURIComponent(symbol)}-USD/spot`,
+      `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd`,
       { headers: { accept: "application/json", "user-agent": "lucid-app/1.0" } },
     );
-    if (!r.ok) return null;
-    const data = (await r.json()) as { data?: { amount?: string } };
-    const amt = data?.data?.amount;
-    const n = amt != null ? Number(amt) : NaN;
-    return Number.isFinite(n) && n > 0 ? n : null;
+    if (!r.ok) return {};
+    const data = (await r.json()) as Record<string, { usd?: number }>;
+    const out: Record<string, number> = {};
+    for (const [sym, id] of pairs) {
+      const p = data[id]?.usd;
+      if (typeof p === "number" && p > 0) out[sym] = p;
+    }
+    return out;
   } catch {
-    return null;
+    return {};
   }
-}
-
-async function fetchCoinbase(symbols: string[]): Promise<Record<string, number>> {
-  if (!symbols.length) return {};
-  const results = await Promise.all(symbols.map((s) => fetchCoinbaseOne(s)));
-  const out: Record<string, number> = {};
-  symbols.forEach((sym, i) => {
-    const p = results[i];
-    if (typeof p === "number") out[sym] = p;
-  });
-  return out;
 }
 
 async function fetchCryptoCompare(symbols: string[]): Promise<Record<string, number>> {
