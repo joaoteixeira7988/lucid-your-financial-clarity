@@ -116,7 +116,8 @@ function collectSymbols(): { crypto: string[]; stock: string[] } {
     let sym = a.symbol?.toUpperCase();
     if (!sym && a.name) {
       const candidate = a.name.trim().toUpperCase();
-      if (KNOWN_CRYPTO.has(candidate) || /^[A-Z]{1,5}$/.test(candidate)) {
+      if (NAME_TO_SYMBOL[candidate]) sym = NAME_TO_SYMBOL[candidate];
+      else if (KNOWN_CRYPTO.has(candidate) || /^[A-Z]{1,5}$/.test(candidate)) {
         sym = candidate;
       }
     }
