@@ -305,7 +305,7 @@ export function ChatInput({
       )}
       <div
         className={cn(
-          "lucid-card relative flex items-end gap-2 transition-all duration-200",
+          "lucid-card relative flex items-center gap-2 transition-all duration-200",
           isHero
             ? "rounded-[28px] p-2.5 pl-5 shadow-[0_0_0_1px_oklch(0.66_0.18_252/0.22),0_18px_50px_-18px_oklch(0.66_0.18_252/0.55)]"
             : "rounded-3xl p-2 pl-4",
@@ -313,10 +313,7 @@ export function ChatInput({
           pulsing && "scale-[0.992] opacity-90"
         )}
       >
-        <LucidMark
-          size={18}
-          className={cn(isHero ? "mb-3.5" : "mb-2.5")}
-        />
+        <LucidMark size={18} className="flex-shrink-0" />
         <textarea
           ref={inputRef}
           value={text}
@@ -325,8 +322,8 @@ export function ChatInput({
           rows={1}
           placeholder="Tell Lucid what happened or ask anything about your money…"
           className={cn(
-            "tabular flex-1 resize-none bg-transparent leading-snug text-foreground placeholder:text-muted-foreground/65 focus:outline-none",
-            isHero ? "py-3.5 text-[15px]" : "py-2.5 text-[14px]"
+            "tabular flex-1 resize-none self-center bg-transparent leading-snug text-foreground placeholder:text-muted-foreground/65 focus:outline-none",
+            isHero ? "py-3 text-[15px]" : "py-2 text-[14px]"
           )}
           style={{ maxHeight: 160 }}
         />
@@ -336,7 +333,7 @@ export function ChatInput({
           disabled={!text.trim()}
           className={cn(
             "lucid-press flex flex-shrink-0 items-center justify-center rounded-2xl transition-[background,box-shadow,transform] duration-200",
-            isHero ? "mb-1 h-11 w-11" : "mb-1 h-9 w-9",
+            isHero ? "h-11 w-11" : "h-9 w-9",
             text.trim()
               ? "bg-primary text-primary-foreground shadow-[0_4px_18px_-4px_oklch(0.66_0.18_252/0.7)]"
               : "bg-surface-elevated text-muted-foreground"
