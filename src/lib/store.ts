@@ -233,9 +233,9 @@ export const useAppStore = create<State>()(
         set((s) => ({ goals: [goal, ...s.goals] }));
         return goal;
       },
-      addActivity: (kind, text) =>
+      addActivity: (kind, text, entityId) =>
         set((s) => ({
-          activity: [{ id: uid(), kind, text, date: new Date().toISOString() }, ...s.activity].slice(0, 80),
+          activity: [{ id: uid(), kind, text, date: new Date().toISOString(), entityId }, ...s.activity].slice(0, 80),
         })),
       addMessage: (m) => {
         const msg: ChatMessage = { ...m, id: uid(), date: new Date().toISOString() };
