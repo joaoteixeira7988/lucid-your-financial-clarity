@@ -92,13 +92,13 @@ const seedTransactions = (base: Currency): Transaction[] => {
 };
 
 const seedAssets = (): Asset[] => [
-  { id: uid(), kind: "cash", name: "Cash", value: 3200, createdAt: new Date().toISOString() },
-  { id: uid(), kind: "savings", name: "High-yield savings", value: 12400, createdAt: new Date().toISOString() },
-  { id: uid(), kind: "vehicle", name: "Car", value: 28000, costBasis: 32000, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 200).toISOString() },
-  { id: uid(), kind: "valuable", name: "Watch", value: 6500, costBasis: 6800, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString() },
-  { id: uid(), kind: "crypto", symbol: "BTC", name: "Bitcoin", quantity: 0.12, value: 0, createdAt: new Date().toISOString() },
-  { id: uid(), kind: "crypto", symbol: "ETH", name: "Ethereum", quantity: 1.4, value: 0, createdAt: new Date().toISOString() },
-  { id: uid(), kind: "stock", symbol: "VOO", name: "S&P 500 ETF", quantity: 12, value: 6240, createdAt: new Date().toISOString() },
+  { id: uid(), kind: "cash", name: "Cash", value: 3200, currency: "USD", createdAt: new Date().toISOString() },
+  { id: uid(), kind: "savings", name: "High-yield savings", value: 12400, currency: "USD", createdAt: new Date().toISOString() },
+  { id: uid(), kind: "vehicle", name: "Car", value: 28000, costBasis: 32000, currency: "USD", createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 200).toISOString() },
+  { id: uid(), kind: "valuable", name: "Watch", value: 6500, costBasis: 6800, currency: "USD", createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString() },
+  { id: uid(), kind: "crypto", symbol: "BTC", name: "Bitcoin", quantity: 0.12, value: 0, currency: "USD", createdAt: new Date().toISOString() },
+  { id: uid(), kind: "crypto", symbol: "ETH", name: "Ethereum", quantity: 1.4, value: 0, currency: "USD", createdAt: new Date().toISOString() },
+  { id: uid(), kind: "stock", symbol: "VOO", name: "S&P 500 ETF", quantity: 12, value: 6240, currency: "USD", createdAt: new Date().toISOString() },
 ];
 
 const seedActivity = (): ActivityItem[] => {
