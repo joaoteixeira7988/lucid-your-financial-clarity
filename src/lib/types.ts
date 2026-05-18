@@ -47,8 +47,12 @@ export type Asset = {
   symbol?: string; // e.g. ETH, BTC
   name: string;
   quantity?: number; // for crypto/stock
-  value: number; // current value in base currency (cash/savings/other)
-  costBasis?: number; // optional purchase price
+  /** Stored amount, denominated in `currency`. For crypto/stock this is the
+   *  fallback used only when live prices are unavailable. */
+  value: number;
+  /** Original currency the value/costBasis are stored in. Defaults to USD. */
+  currency?: Currency;
+  costBasis?: number; // optional purchase price (in `currency`)
   note?: string;
   createdAt: string;
 };
