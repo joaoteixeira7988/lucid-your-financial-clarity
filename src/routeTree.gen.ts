@@ -16,6 +16,7 @@ import { Route as NetWorthRouteImport } from './routes/net-worth'
 import { Route as InvestmentsRouteImport } from './routes/investments'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiQuotesRouteImport } from './routes/api/quotes'
 import { Route as ApiQuoteRouteImport } from './routes/api/quote'
 import { Route as ApiParseRouteImport } from './routes/api/parse'
 
@@ -54,6 +55,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiQuotesRoute = ApiQuotesRouteImport.update({
+  id: '/api/quotes',
+  path: '/api/quotes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiQuoteRoute = ApiQuoteRouteImport.update({
   id: '/api/quote',
   path: '/api/quote',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
   '/api/quote': typeof ApiQuoteRoute
+  '/api/quotes': typeof ApiQuotesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
   '/api/quote': typeof ApiQuoteRoute
+  '/api/quotes': typeof ApiQuotesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
   '/api/quote': typeof ApiQuoteRoute
+  '/api/quotes': typeof ApiQuotesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/spending'
     | '/api/parse'
     | '/api/quote'
+    | '/api/quotes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/spending'
     | '/api/parse'
     | '/api/quote'
+    | '/api/quotes'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/spending'
     | '/api/parse'
     | '/api/quote'
+    | '/api/quotes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   SpendingRoute: typeof SpendingRoute
   ApiParseRoute: typeof ApiParseRoute
   ApiQuoteRoute: typeof ApiQuoteRoute
+  ApiQuotesRoute: typeof ApiQuotesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/quotes': {
+      id: '/api/quotes'
+      path: '/api/quotes'
+      fullPath: '/api/quotes'
+      preLoaderRoute: typeof ApiQuotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/quote': {
       id: '/api/quote'
       path: '/api/quote'
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   SpendingRoute: SpendingRoute,
   ApiParseRoute: ApiParseRoute,
   ApiQuoteRoute: ApiQuoteRoute,
+  ApiQuotesRoute: ApiQuotesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
