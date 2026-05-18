@@ -38,7 +38,7 @@ export function SwipeRow({
 
   const clear = () => {
     if (timer.current != null) {
-      window.clearTimeout(timer.current);
+      clearTimeout(timer.current);
       timer.current = null;
     }
     setHolding(false);
@@ -50,7 +50,7 @@ export function SwipeRow({
     startX.current = e.clientX;
     startY.current = e.clientY;
     setHolding(true);
-    timer.current = window.setTimeout(() => {
+    timer.current = setTimeout(() => {
       setHolding(false);
       timer.current = null;
       setOpen(true);
