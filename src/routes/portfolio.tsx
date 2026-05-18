@@ -354,8 +354,11 @@ function AssetsView({
           {tangibles.map((a) => {
             const Icon = ASSET_ICON[a.kind] ?? Package;
             const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
-            const change = a.costBasis
-              ? ((value - a.costBasis) / a.costBasis) * 100
+            const costInBase = a.costBasis
+              ? toBase(a.costBasis, a.currency ?? "USD", base)
+              : 0;
+            const change = costInBase
+              ? ((value - costInBase) / costInBase) * 100
               : null;
             return (
               <li key={a.id}>
@@ -369,7 +372,7 @@ function AssetsView({
                         <p className="truncate text-[14px] font-medium text-foreground">{a.name}</p>
                         <p className="text-[11px] capitalize text-muted-foreground">
                           {a.kind}
-                          {a.costBasis ? ` · cost ${fmtMoney(a.costBasis, base, { compact: true })}` : ""}
+                          {costInBase ? ` · cost ${fmtMoney(costInBase, base, { compact: true })}` : ""}
                         </p>
                       </div>
                     </div>
