@@ -11,6 +11,7 @@ import { useAppStore, INVESTMENT_KINDS } from "./store";
  */
 
 const REFRESH_INTERVAL = 2 * 60 * 1000;
+const MISSING_RETRY_INTERVAL = 30 * 1000;
 
 export type QuoteResult = {
   symbol: string;
