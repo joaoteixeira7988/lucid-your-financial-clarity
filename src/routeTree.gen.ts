@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SpendingRouteImport } from './routes/spending'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as NetWorthRouteImport } from './routes/net-worth'
 import { Route as InvestmentsRouteImport } from './routes/investments'
@@ -21,6 +22,11 @@ import { Route as ApiParseRouteImport } from './routes/api/parse'
 const SpendingRoute = SpendingRouteImport.update({
   id: '/spending',
   path: '/spending',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortfolioRoute = PortfolioRouteImport.update({
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/investments': typeof InvestmentsRoute
   '/net-worth': typeof NetWorthRoute
   '/portfolio': typeof PortfolioRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
   '/api/quote': typeof ApiQuoteRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/investments': typeof InvestmentsRoute
   '/net-worth': typeof NetWorthRoute
   '/portfolio': typeof PortfolioRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
   '/api/quote': typeof ApiQuoteRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/investments': typeof InvestmentsRoute
   '/net-worth': typeof NetWorthRoute
   '/portfolio': typeof PortfolioRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
   '/api/quote': typeof ApiQuoteRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/investments'
     | '/net-worth'
     | '/portfolio'
+    | '/sitemap.xml'
     | '/spending'
     | '/api/parse'
     | '/api/quote'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/investments'
     | '/net-worth'
     | '/portfolio'
+    | '/sitemap.xml'
     | '/spending'
     | '/api/parse'
     | '/api/quote'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/investments'
     | '/net-worth'
     | '/portfolio'
+    | '/sitemap.xml'
     | '/spending'
     | '/api/parse'
     | '/api/quote'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   InvestmentsRoute: typeof InvestmentsRoute
   NetWorthRoute: typeof NetWorthRoute
   PortfolioRoute: typeof PortfolioRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SpendingRoute: typeof SpendingRoute
   ApiParseRoute: typeof ApiParseRoute
   ApiQuoteRoute: typeof ApiQuoteRoute
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/spending'
       fullPath: '/spending'
       preLoaderRoute: typeof SpendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portfolio': {
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvestmentsRoute: InvestmentsRoute,
   NetWorthRoute: NetWorthRoute,
   PortfolioRoute: PortfolioRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SpendingRoute: SpendingRoute,
   ApiParseRoute: ApiParseRoute,
   ApiQuoteRoute: ApiQuoteRoute,
