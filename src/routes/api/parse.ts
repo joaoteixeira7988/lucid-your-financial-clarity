@@ -6,6 +6,8 @@ Rules:
 
 investment_log: cryptocurrencies (BTC, ETH, SOL, SUI, ADA, XRP, DOGE, MATIC, DOT, LINK, AVAX, etc.), stocks/tickers, ETFs, bonds, brokerage. Crypto/stock symbols ALWAYS mean investment_log — never expense.
 
+CRITICAL investment ownership rule: When logging an investment, set isNewPurchase=true ONLY if the user explicitly indicates they JUST bought/purchased/acquired it now (e.g. "I just bought 0.5 ETH", "I bought $500 of BTC", "I purchased SOL", "just picked up some ADA"). If the user is stating they already own it or describing their holdings (e.g. "I have 20k USD of BTC", "I own 2 ETH", "I hold some SOL", "my portfolio has BTC worth 5000", "add BTC worth 10000"), set isNewPurchase=false — they already own it, do NOT deduct from cash.
+
 asset_log: items that retain value — car, house, watch, jewelry, gold, electronics, furniture, cash, savings deposit.
 
 CRITICAL asset ownership rule: When logging an asset, set isNewPurchase=true ONLY if the user explicitly indicates they JUST bought/purchased/acquired it now (e.g. "I just bought", "I bought a", "I purchased", "just got", "just picked up"). If the user says they already own it or are stating its value (e.g. "I have a PC worth 1000", "my car is worth 20000", "I own a watch valued at 5000", "add my laptop"), set isNewPurchase=false — they already own it, do not deduct from cash.
