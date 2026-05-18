@@ -158,19 +158,23 @@ export const useAppStore = create<State>()(
         set((s) => ({ assets: [asset, ...s.assets] }));
         return asset;
       },
+      updateAsset: (id, patch) => {
+        set((s) => ({
+          assets: s.assets.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+        }));
+      },
       deleteTransaction: (id) => {
-        set((s) => {
-          const tx = s.transactions.find((t) => t.id === id);
-          if (!tx) return {} as Partial<State>;
-          const label = tx.merchant ?? tx.category;
-          return {
-            transactions: s.transactions.filter((t) => t.id !== id),
-            activity: [
-              { id: uid(), kind: "system" as ActivityKind, text: `Deleted ${label}.`, date: new Date().toISOString() },
-              ...s.activity,
-            ].slice(0, 80),
-          };
-        });
+        const s = get();
+        const tx = s.transactions.find((t) => t.id === id);
+        if (!tx) return;
+        // Reverse the cash effect: expenses return money to cash, income deducts.
+        const baseAmt = toBase(tx.amount, tx.currency, s.baseCurrency);
+        if (tx.type === "expense") get().adjustCash(baseAmt);
+        else if (tx.type === "income") get().adjustCash(-baseAmt);
+        set((cur) => ({
+          transactions: cur.transactions.filter((t) => t.id !== id),
+          activity: cur.activity.filter((a) => a.entityId !== id),
+        }));
       },
       deleteAsset: (id) => {
         set((s) => {
@@ -178,10 +182,7 @@ export const useAppStore = create<State>()(
           if (!a) return {} as Partial<State>;
           return {
             assets: s.assets.filter((x) => x.id !== id),
-            activity: [
-              { id: uid(), kind: "system" as ActivityKind, text: `Deleted ${a.name}.`, date: new Date().toISOString() },
-              ...s.activity,
-            ].slice(0, 80),
+            activity: s.activity.filter((act) => act.entityId !== id),
           };
         });
       },
@@ -191,10 +192,7 @@ export const useAppStore = create<State>()(
           if (!l) return {} as Partial<State>;
           return {
             liabilities: s.liabilities.filter((x) => x.id !== id),
-            activity: [
-              { id: uid(), kind: "system" as ActivityKind, text: `Deleted ${l.name}.`, date: new Date().toISOString() },
-              ...s.activity,
-            ].slice(0, 80),
+            activity: s.activity.filter((act) => act.entityId !== id),
           };
         });
       },
