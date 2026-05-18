@@ -73,7 +73,7 @@ export async function fetchQuote(
 async function fetchCryptoBatch(symbols: string[]): Promise<Record<string, number>> {
   if (!symbols.length) return {};
   try {
-    const r = await fetch("/api/quotes", {
+    const r = await fetch("/api/prices", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ symbols }),

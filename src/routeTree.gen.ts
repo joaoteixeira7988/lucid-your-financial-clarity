@@ -18,6 +18,7 @@ import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiQuotesRouteImport } from './routes/api/quotes'
 import { Route as ApiQuoteRouteImport } from './routes/api/quote'
+import { Route as ApiPricesRouteImport } from './routes/api/prices'
 import { Route as ApiParseRouteImport } from './routes/api/parse'
 
 const SpendingRoute = SpendingRouteImport.update({
@@ -65,6 +66,11 @@ const ApiQuoteRoute = ApiQuoteRouteImport.update({
   path: '/api/quote',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPricesRoute = ApiPricesRouteImport.update({
+  id: '/api/prices',
+  path: '/api/prices',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiParseRoute = ApiParseRouteImport.update({
   id: '/api/parse',
   path: '/api/parse',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
+  '/api/prices': typeof ApiPricesRoute
   '/api/quote': typeof ApiQuoteRoute
   '/api/quotes': typeof ApiQuotesRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
+  '/api/prices': typeof ApiPricesRoute
   '/api/quote': typeof ApiQuoteRoute
   '/api/quotes': typeof ApiQuotesRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spending': typeof SpendingRoute
   '/api/parse': typeof ApiParseRoute
+  '/api/prices': typeof ApiPricesRoute
   '/api/quote': typeof ApiQuoteRoute
   '/api/quotes': typeof ApiQuotesRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/spending'
     | '/api/parse'
+    | '/api/prices'
     | '/api/quote'
     | '/api/quotes'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/spending'
     | '/api/parse'
+    | '/api/prices'
     | '/api/quote'
     | '/api/quotes'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/spending'
     | '/api/parse'
+    | '/api/prices'
     | '/api/quote'
     | '/api/quotes'
   fileRoutesById: FileRoutesById
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SpendingRoute: typeof SpendingRoute
   ApiParseRoute: typeof ApiParseRoute
+  ApiPricesRoute: typeof ApiPricesRoute
   ApiQuoteRoute: typeof ApiQuoteRoute
   ApiQuotesRoute: typeof ApiQuotesRoute
 }
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiQuoteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/prices': {
+      id: '/api/prices'
+      path: '/api/prices'
+      fullPath: '/api/prices'
+      preLoaderRoute: typeof ApiPricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/parse': {
       id: '/api/parse'
       path: '/api/parse'
@@ -244,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SpendingRoute: SpendingRoute,
   ApiParseRoute: ApiParseRoute,
+  ApiPricesRoute: ApiPricesRoute,
   ApiQuoteRoute: ApiQuoteRoute,
   ApiQuotesRoute: ApiQuotesRoute,
 }
