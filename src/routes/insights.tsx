@@ -8,10 +8,12 @@ export const Route = createFileRoute("/insights")({
   head: () => ({
     meta: [
       { title: "Insights — Lucid" },
-      { name: "description", content: "AI-generated summaries, goal progress, and short strategic suggestions." },
+      { name: "description", content: "AI-generated weekly, monthly, and yearly financial summaries, goal progress, and short strategic suggestions in one calm view." },
       { property: "og:title", content: "Insights — Lucid" },
-      { property: "og:description", content: "Weekly, monthly, and yearly progress in one calm view." },
+      { property: "og:description", content: "Weekly, monthly, and yearly progress with AI summaries and goal tracking." },
+      { property: "og:url", content: "https://lucidfinance.dev/insights" },
     ],
+    links: [{ rel: "canonical", href: "https://lucidfinance.dev/insights" }],
   }),
   component: InsightsPage,
 });
