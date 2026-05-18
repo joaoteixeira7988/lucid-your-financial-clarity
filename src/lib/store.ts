@@ -203,22 +203,26 @@ export const useAppStore = create<State>()(
         const s = get();
         const cash = s.assets.find((a) => a.kind === "cash");
         if (!cash) {
-          // Auto-create a cash asset so net worth stays coherent.
+          // Auto-create a cash asset (canonical USD) so net worth stays coherent.
+          const usdDelta = toBase(deltaInBase, s.baseCurrency, "USD");
           const created: Asset = {
             id: uid(),
             kind: "cash",
             name: "Cash",
-            value: Math.max(0, deltaInBase),
+            value: Math.max(0, usdDelta),
+            currency: "USD",
             createdAt: new Date().toISOString(),
           };
           set({ assets: [created, ...s.assets] });
-          return created.value;
+          return toBase(created.value, "USD", s.baseCurrency);
         }
-        const next = cash.value + deltaInBase;
+        const cashCurrency = cash.currency ?? "USD";
+        const deltaInCash = toBase(deltaInBase, s.baseCurrency, cashCurrency);
+        const next = cash.value + deltaInCash;
         set({
           assets: s.assets.map((a) => (a.id === cash.id ? { ...a, value: next } : a)),
         });
-        return next;
+        return toBase(next, cashCurrency, s.baseCurrency);
       },
       addLiability: (l) => {
         const liab: Liability = { ...l, id: uid(), createdAt: new Date().toISOString() };
