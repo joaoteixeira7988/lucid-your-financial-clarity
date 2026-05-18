@@ -130,13 +130,13 @@ export const Route = createFileRoute("/api/prices")({
           console.log("[/api/prices] requested:", upper, "missing:", missing);
 
           if (missing.length) {
-            const cb = await fetchCoinbase(missing);
-            console.log("[/api/prices] coinbase returned:", cb);
-            const stillMissing = missing.filter((s) => !(s in cb));
+            const cg = await fetchCoinGecko(missing);
+            console.log("[/api/prices] coingecko returned:", cg);
+            const stillMissing = missing.filter((s) => !(s in cg));
             const cc = stillMissing.length ? await fetchCryptoCompare(stillMissing) : {};
             if (stillMissing.length) console.log("[/api/prices] cryptocompare returned:", cc);
             for (const sym of missing) {
-              const price = cb[sym] ?? cc[sym];
+              const price = cg[sym] ?? cc[sym];
               if (typeof price === "number") {
                 result[sym] = price;
                 cache.set(sym, { price, at: now });
