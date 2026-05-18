@@ -271,7 +271,20 @@ export const useAppStore = create<State>()(
     }),
     {
       name: "lucid-store-v3",
-      version: 3,
+      version: 4,
+      migrate: (persisted: any, version) => {
+        if (!persisted) return persisted;
+        if (version < 4 && Array.isArray(persisted.assets)) {
+          // Pre-v4: asset.value was stored in the persisted baseCurrency.
+          // Stamp it onto each asset so future base-currency switches convert.
+          const stamp = persisted.baseCurrency ?? "USD";
+          persisted.assets = persisted.assets.map((a: any) => ({
+            ...a,
+            currency: a.currency ?? stamp,
+          }));
+        }
+        return persisted;
+      },
       // Don't persist onboarding/session-only state — onboarding should be
       // driven by real data presence, not a sticky flag that can drift.
       partialize: (s) => ({
