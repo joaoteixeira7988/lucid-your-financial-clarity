@@ -107,10 +107,14 @@ export const Route = createFileRoute("/api/prices")({
             else missing.push(sym);
           }
 
+          console.log("[/api/prices] requested:", upper, "missing:", missing);
+
           if (missing.length) {
             const cg = await fetchCoinGecko(missing);
+            console.log("[/api/prices] coingecko returned:", cg);
             const stillMissing = missing.filter((s) => !(s in cg));
-            const cc = await fetchCryptoCompare(stillMissing);
+            const cc = stillMissing.length ? await fetchCryptoCompare(stillMissing) : {};
+            if (stillMissing.length) console.log("[/api/prices] cryptocompare returned:", cc);
             for (const sym of missing) {
               const price = cg[sym] ?? cc[sym];
               if (typeof price === "number") {
@@ -120,6 +124,7 @@ export const Route = createFileRoute("/api/prices")({
             }
           }
 
+          console.log("[/api/prices] final result:", result);
           return new Response(JSON.stringify({ prices: result }), { headers: JSON_HEADERS });
         } catch (e) {
           console.error("prices handler error:", e);
