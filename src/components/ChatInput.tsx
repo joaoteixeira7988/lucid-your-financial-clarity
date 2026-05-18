@@ -177,13 +177,19 @@ export function ChatInput({
         }
 
 
+        // Investments are anchored in USD (live prices are USD-denominated).
+        const purchaseValueUsd =
+          purchaseValueBase != null
+            ? toBase(purchaseValueBase, baseCurrency, "USD")
+            : undefined;
         addAsset({
           kind,
           symbol,
           name: e.assetName ?? resolvedName ?? symbol ?? "Investment",
           quantity,
-          value: purchaseValueBase ?? 0,
-          costBasis: purchaseValueBase,
+          value: purchaseValueUsd ?? 0,
+          currency: "USD",
+          costBasis: purchaseValueUsd,
         });
         if (purchaseValueBase != null) adjustCash(-purchaseValueBase);
 
