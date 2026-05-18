@@ -23,10 +23,12 @@ export const Route = createFileRoute("/portfolio")({
   head: () => ({
     meta: [
       { title: "Portfolio — Lucid" },
-      { name: "description", content: "Your investments and tracked assets in one calm view." },
+      { name: "description", content: "Your investments and tracked assets in one calm view — crypto, stocks, cash, and property with live pricing and allocation." },
       { property: "og:title", content: "Portfolio — Lucid" },
-      { property: "og:description", content: "Holdings, allocation, and tracked assets." },
+      { property: "og:description", content: "Holdings, allocation, and tracked assets with live crypto and stock pricing." },
+      { property: "og:url", content: "https://lucidfinance.dev/portfolio" },
     ],
+    links: [{ rel: "canonical", href: "https://lucidfinance.dev/portfolio" }],
   }),
   component: PortfolioPage,
 });
