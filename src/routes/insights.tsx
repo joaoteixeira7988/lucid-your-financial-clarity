@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { useAppStore, getSpendInRange, getNetWorth, getCategorySpend } from "@/lib/store";
+import { useAppStore, getSpendInRange, getNetWorth, getCategorySpend, getAssetValueInBase } from "@/lib/store";
 import { fmtMoney } from "@/lib/currency";
 import { Sparkles, Target, TrendingUp, TrendingDown } from "lucide-react";
 
