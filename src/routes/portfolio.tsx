@@ -159,10 +159,13 @@ function groupHoldings(
     const sym = a.symbol?.toUpperCase();
     const key = sym ? `${a.kind}:${sym}` : `${a.kind}:${a.id}`;
     const value = getAssetValueInBase(a, base, cryptoPrices, stockPrices);
+    const costInBase = a.costBasis
+      ? toBase(a.costBasis, a.currency ?? "USD", base)
+      : 0;
     const existing = map.get(key);
     if (existing) {
       existing.quantity += a.quantity ?? 0;
-      existing.costBasis += a.costBasis ?? 0;
+      existing.costBasis += costInBase;
       existing.value += value;
     } else {
       map.set(key, {
@@ -171,7 +174,7 @@ function groupHoldings(
         symbol: sym,
         name: a.name,
         quantity: a.quantity ?? 0,
-        costBasis: a.costBasis ?? 0,
+        costBasis: costInBase,
         value,
       });
     }
