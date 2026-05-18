@@ -147,7 +147,13 @@ export function ChatInput({
         });
         const kind: "crypto" | "stock" =
           e.assetKind === "stock" ? "stock" : "crypto";
-        const symbol = e.symbol?.toUpperCase();
+        // Fall back to assetName when the parser didn't surface an explicit
+        // symbol but the name itself looks like a ticker (e.g. "BTC").
+        let symbol = e.symbol?.toUpperCase();
+        if (!symbol && e.assetName) {
+          const candidate = e.assetName.trim().toUpperCase();
+          if (/^[A-Z]{1,5}$/.test(candidate)) symbol = candidate;
+        }
 
         let livePriceUsd: number | undefined;
         let resolvedName: string | undefined;
