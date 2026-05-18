@@ -107,7 +107,8 @@ export function ChatInput({
         adjustCash(-baseAmt);
         addActivity(
           "expense",
-          `Logged expense: ${e.category ?? "Other"} (${formatBase(baseAmt, baseCurrency)}).`
+          `Logged expense: ${e.category ?? "Other"} (${formatBase(baseAmt, baseCurrency)}).`,
+          tx.id
         );
       });
       setLastAction({
