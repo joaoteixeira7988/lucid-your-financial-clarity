@@ -123,7 +123,7 @@ export function ChatInput({
       setLastAction({ kind: "income", at: new Date().toISOString() });
       result.entries.forEach((e) => {
         if (e.amount == null) return;
-        addTransaction({
+        const tx = addTransaction({
           amount: e.amount,
           currency: e.currency ?? baseCurrency,
           category: "Income",
@@ -133,7 +133,7 @@ export function ChatInput({
         });
         const baseAmt = toBase(e.amount, e.currency ?? baseCurrency, baseCurrency);
         adjustCash(baseAmt);
-        addActivity("income", `Income: ${formatBase(baseAmt, baseCurrency)}.`);
+        addActivity("income", `Income: ${formatBase(baseAmt, baseCurrency)}.`, tx.id);
       });
     } else if (result.intent === "investment_log") {
       setLastAction({ kind: "investment", at: new Date().toISOString() });
