@@ -4,75 +4,99 @@ import { useAppStore, INVESTMENT_KINDS } from "./store";
 /**
  * Live market data layer.
  *
- * - Caches USD prices in Zustand under `cryptoPrices` (crypto) and
- *   `stockPrices` (stocks). Both keyed by uppercase symbol.
- * - Refreshes on app load and every 2 minutes while the app is open.
- * - Exposes `fetchQuote(symbol, kind)` for one-off lookups (used when the
- *   parser logs a new investment).
+ * - Crypto prices are fetched in a single batch via /api/quotes (CoinGecko
+ *   with CryptoCompare fallback) to avoid per-symbol rate limits.
+ * - Stock prices are fetched one-by-one via /api/quote (Finnhub).
+ * - Refreshes on app load, when the asset set changes, and every 2 minutes.
  */
 
 const REFRESH_INTERVAL = 2 * 60 * 1000;
-const inflight = new Map<string, Promise<QuoteResult | null>>();
 
 export type QuoteResult = {
   symbol: string;
   kind: "crypto" | "stock";
-  /** Always USD. */
-  price: number;
+  price: number; // USD
   name?: string;
   cached?: boolean;
 };
 
+const KNOWN_CRYPTO = new Set([
+  "BTC","ETH","SOL","SUI","XLM","ADA","XRP","DOGE","MATIC","DOT","LINK","AVAX",
+  "BNB","TRX","LTC","ATOM","NEAR","APT","ARB","OP","INJ","TON","SHIB","PEPE",
+  "UNI","AAVE","FIL","HBAR","ALGO","XMR","ETC","FTM","VET","SAND","MANA",
+  "AXS","CRO","TIA",
+]);
+
+const stockInflight = new Map<string, Promise<QuoteResult | null>>();
+
+/** One-off lookup. Used when logging a new investment from chat. */
 export async function fetchQuote(
   symbol: string,
-  kind: "crypto" | "stock"
+  kind: "crypto" | "stock",
 ): Promise<QuoteResult | null> {
   if (!symbol) return null;
-  const key = `${kind}:${symbol.toUpperCase()}`;
-  const existing = inflight.get(key);
-  if (existing) return existing;
+  const sym = symbol.toUpperCase();
 
+  if (kind === "crypto") {
+    const map = await fetchCryptoBatch([sym]);
+    const price = map[sym];
+    if (typeof price !== "number") return null;
+    return { symbol: sym, kind, price };
+  }
+
+  // Stock — single-shot.
+  const key = `stock:${sym}`;
+  const existing = stockInflight.get(key);
+  if (existing) return existing;
   const p = (async () => {
     try {
       const r = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol, kind }),
+        body: JSON.stringify({ symbol: sym, kind }),
       });
       if (!r.ok) return null;
       const data = (await r.json()) as QuoteResult;
-      // Mirror into the relevant store cache.
-      const state = useAppStore.getState();
-      if (kind === "crypto") {
-        state.setCryptoPrices({ ...state.cryptoPrices, [data.symbol]: data.price });
-      } else {
-        state.setStockPrices({ ...state.stockPrices, [data.symbol]: data.price });
-      }
+      const s = useAppStore.getState();
+      s.setStockPrices({ ...s.stockPrices, [data.symbol]: data.price });
       return data;
     } catch {
       return null;
     } finally {
-      inflight.delete(key);
+      stockInflight.delete(key);
     }
   })();
-
-  inflight.set(key, p);
+  stockInflight.set(key, p);
   return p;
 }
 
-const KNOWN_CRYPTO = new Set([
-  "BTC","ETH","SOL","SUI","ADA","XRP","DOGE","MATIC","DOT","LINK","AVAX","BNB",
-  "TRX","LTC","ATOM","NEAR","APT","ARB","OP","INJ","TON","SHIB","PEPE","UNI",
-  "AAVE","FIL",
-]);
+async function fetchCryptoBatch(symbols: string[]): Promise<Record<string, number>> {
+  if (!symbols.length) return {};
+  try {
+    const r = await fetch("/api/quotes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbols }),
+    });
+    if (!r.ok) return {};
+    const data = (await r.json()) as { prices?: Record<string, number> };
+    const prices = data.prices ?? {};
+    if (Object.keys(prices).length) {
+      const s = useAppStore.getState();
+      s.setCryptoPrices({ ...s.cryptoPrices, ...prices });
+    }
+    return prices;
+  } catch {
+    return {};
+  }
+}
 
-async function refreshAllHoldings() {
+function collectSymbols(): { crypto: string[]; stock: string[] } {
   const state = useAppStore.getState();
-  const work: { symbol: string; kind: "crypto" | "stock" }[] = [];
+  const crypto = new Set<string>();
+  const stock = new Set<string>();
   for (const a of state.assets) {
     if (!INVESTMENT_KINDS.has(a.kind)) continue;
-    // Prefer explicit symbol; otherwise infer from the asset name when it's
-    // a known ticker (covers cases where the parser stored only `name: "BTC"`).
     let sym = a.symbol?.toUpperCase();
     if (!sym && a.name) {
       const candidate = a.name.trim().toUpperCase();
@@ -81,23 +105,18 @@ async function refreshAllHoldings() {
       }
     }
     if (!sym) continue;
-    const kind: "crypto" | "stock" =
-      a.kind === "stock" ? "stock" : KNOWN_CRYPTO.has(sym) ? "crypto" : (a.kind as "crypto" | "stock");
-    work.push({ symbol: sym, kind });
+    const kind = a.kind === "stock" ? "stock" : KNOWN_CRYPTO.has(sym) ? "crypto" : a.kind;
+    if (kind === "stock") stock.add(sym);
+    else if (kind === "crypto") crypto.add(sym);
   }
+  return { crypto: [...crypto], stock: [...stock] };
+}
 
-  // Dedupe.
-  const seen = new Set<string>();
-  const deduped = work.filter((s) => {
-    const k = `${s.kind}:${s.symbol}`;
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
-
-  // Run sequentially-ish (don't blast CoinGecko rate limit).
-  for (const s of deduped) {
-    await fetchQuote(s.symbol, s.kind);
+async function refreshAllHoldings() {
+  const { crypto, stock } = collectSymbols();
+  await fetchCryptoBatch(crypto);
+  for (const sym of stock) {
+    await fetchQuote(sym, "stock");
   }
 }
 
@@ -109,7 +128,7 @@ export function useMarketPrices() {
       .filter((a) => INVESTMENT_KINDS.has(a.kind))
       .map((a) => `${a.kind}:${(a.symbol ?? a.name ?? "").toUpperCase()}`)
       .sort()
-      .join("|")
+      .join("|"),
   );
 
   useEffect(() => {
