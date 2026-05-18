@@ -27,6 +27,22 @@ const KNOWN_CRYPTO = new Set([
   "AXS","CRO","TIA",
 ]);
 
+// Maps a full coin name to its ticker so holdings logged as "Ethereum" still
+// resolve to a CoinGecko-friendly symbol when batched.
+const NAME_TO_SYMBOL: Record<string, string> = {
+  BITCOIN: "BTC", ETHEREUM: "ETH", SOLANA: "SOL", STELLAR: "XLM",
+  CARDANO: "ADA", RIPPLE: "XRP", DOGECOIN: "DOGE", POLYGON: "MATIC",
+  POLKADOT: "DOT", CHAINLINK: "LINK", AVALANCHE: "AVAX", BINANCE: "BNB",
+  "BINANCE COIN": "BNB", TRON: "TRX", LITECOIN: "LTC", COSMOS: "ATOM",
+  APTOS: "APT", ARBITRUM: "ARB", OPTIMISM: "OP", INJECTIVE: "INJ",
+  TONCOIN: "TON", "THE OPEN NETWORK": "TON", "SHIBA INU": "SHIB",
+  PEPE: "PEPE", UNISWAP: "UNI", AAVE: "AAVE", FILECOIN: "FIL",
+  HEDERA: "HBAR", ALGORAND: "ALGO", MONERO: "XMR",
+  "ETHEREUM CLASSIC": "ETC", FANTOM: "FTM", VECHAIN: "VET",
+  "THE SANDBOX": "SAND", DECENTRALAND: "MANA", "AXIE INFINITY": "AXS",
+  CRONOS: "CRO", CELESTIA: "TIA", SUI: "SUI", NEAR: "NEAR",
+};
+
 const stockInflight = new Map<string, Promise<QuoteResult | null>>();
 
 /** One-off lookup. Used when logging a new investment from chat. */
