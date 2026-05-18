@@ -329,17 +329,19 @@ export function getAssetValueInBase(
   prices: Record<string, number>,
   stockPrices?: Record<string, number>
 ): number {
+  const stored = asset.currency ?? "USD";
+  const fallback = toBase(asset.value || 0, stored, base);
   if (asset.kind === "crypto" && asset.symbol && asset.quantity != null) {
     const usd = (prices[asset.symbol] ?? 0) * asset.quantity;
     if (usd > 0) return toBase(usd, "USD", base);
-    return asset.value || 0;
+    return fallback;
   }
   if (asset.kind === "stock" && asset.symbol && asset.quantity != null && stockPrices) {
     const usd = (stockPrices[asset.symbol] ?? 0) * asset.quantity;
     if (usd > 0) return toBase(usd, "USD", base);
-    return asset.value || 0;
+    return fallback;
   }
-  return asset.value || 0;
+  return fallback;
 }
 
 export function getNetWorth(state: State): number {
