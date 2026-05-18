@@ -189,7 +189,7 @@ export function ChatInput({
           purchaseValueBase != null
             ? toBase(purchaseValueBase, baseCurrency, "USD")
             : undefined;
-        addAsset({
+        const newAsset = addAsset({
           kind,
           symbol,
           name: e.assetName ?? resolvedName ?? symbol ?? "Investment",
@@ -214,7 +214,7 @@ export function ChatInput({
           qtyLabel && symbol
             ? `Added ${qtyLabel} ${symbol}${valLabel ? ` (${valLabel})` : ""}.`
             : `Added ${symbol ?? e.assetName ?? "investment"}${valLabel ? ` (${valLabel})` : ""}.`;
-        addActivity("investment", label);
+        addActivity("investment", label, newAsset.id);
       }
 
     } else if (result.intent === "asset_log") {
