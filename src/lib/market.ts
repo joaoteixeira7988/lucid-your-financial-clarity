@@ -102,9 +102,19 @@ async function refreshAllHoldings() {
 }
 
 export function useMarketPrices() {
+  // Track a fingerprint of investment symbols so a freshly-logged holding
+  // triggers an immediate refresh instead of waiting up to 2 minutes.
+  const symbolKey = useAppStore((s) =>
+    s.assets
+      .filter((a) => INVESTMENT_KINDS.has(a.kind))
+      .map((a) => `${a.kind}:${(a.symbol ?? a.name ?? "").toUpperCase()}`)
+      .sort()
+      .join("|")
+  );
+
   useEffect(() => {
     refreshAllHoldings();
     const id = setInterval(refreshAllHoldings, REFRESH_INTERVAL);
     return () => clearInterval(id);
-  }, []);
+  }, [symbolKey]);
 }
