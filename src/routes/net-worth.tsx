@@ -29,10 +29,12 @@ export const Route = createFileRoute("/net-worth")({
   head: () => ({
     meta: [
       { title: "Net Worth — Lucid" },
-      { name: "description", content: "Your full financial overview at a glance." },
+      { name: "description", content: "See your full financial picture in Lucid — total net worth, broken down by cash, investments, property, and other tracked assets." },
       { property: "og:title", content: "Net Worth — Lucid" },
-      { property: "og:description", content: "Total net worth and breakdown by asset class." },
+      { property: "og:description", content: "Total net worth and breakdown by asset class — cash, investments, property, and more." },
+      { property: "og:url", content: "https://lucidfinance.dev/net-worth" },
     ],
+    links: [{ rel: "canonical", href: "https://lucidfinance.dev/net-worth" }],
   }),
   component: NetWorthPage,
 });

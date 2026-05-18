@@ -1,0 +1,13 @@
+# Lucid
+
+> Lucid is an AI-powered personal finance app. Talk naturally — Lucid logs your expenses, tracks investments, and shows your real net worth in seconds.
+
+Lucid replaces manual expense tracking with a calm conversational interface. Users describe spending, purchases, holdings, and goals in plain language; Lucid parses, categorizes, and reflects them back as live net worth, spending breakdowns, and portfolio allocation with live crypto and stock pricing.
+
+## Pages
+
+- [Home](/): Net worth, today and this week's spending, investments overview, and the conversational command bar.
+- [Spending](/spending): Weekly and monthly spending broken down by category with recent transactions.
+- [Portfolio](/portfolio): Investments and tracked assets — crypto, stocks, cash, savings, and property with live pricing and allocation.
+- [Net Worth](/net-worth): Full net-worth breakdown by asset class over time.
+- [Insights](/insights): AI-generated weekly, monthly, and yearly summaries, goal progress, and suggestions.

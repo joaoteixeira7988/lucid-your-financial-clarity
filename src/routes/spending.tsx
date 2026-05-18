@@ -14,10 +14,12 @@ export const Route = createFileRoute("/spending")({
   head: () => ({
     meta: [
       { title: "Spending — Lucid" },
-      { name: "description", content: "See where your money is going. Categorized, simple, calm." },
+      { name: "description", content: "See where your money is going with Lucid — categorized weekly and monthly spending, calm and simple." },
       { property: "og:title", content: "Spending — Lucid" },
-      { property: "og:description", content: "Categorized spending, weekly and monthly." },
+      { property: "og:description", content: "Categorized spending, weekly and monthly trends in one calm view." },
+      { property: "og:url", content: "https://lucidfinance.dev/spending" },
     ],
+    links: [{ rel: "canonical", href: "https://lucidfinance.dev/spending" }],
   }),
   component: SpendingPage,
 });
