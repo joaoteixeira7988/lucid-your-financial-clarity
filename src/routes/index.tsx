@@ -50,39 +50,47 @@ function HomePage() {
       <h1 className="sr-only">Lucid — Home</h1>
       {/* Hero metric */}
       <div className="grid gap-3">
-        <MetricCard
-          prominent
-          label="Net worth"
-          value={fmtMoney(nw, base, { compact: true })}
-          animatedValue={{ amount: nw, currency: base, compact: true }}
-          delta={{ value: "+3.1%", positive: true }}
-          hint="this month"
-        />
+        <Link to="/net-worth" className="lucid-press block rounded-[inherit]">
+          <MetricCard
+            prominent
+            label="Net worth"
+            value={fmtMoney(nw, base, { compact: true })}
+            animatedValue={{ amount: nw, currency: base, compact: true }}
+            delta={{ value: "+3.1%", positive: true }}
+            hint="this month"
+          />
+        </Link>
         <div className="grid grid-cols-2 gap-3">
-          <MetricCard
-            label="Today"
-            value={fmtMoney(today, base)}
-            animatedValue={{ amount: today, currency: base }}
-            hint="spending"
-          />
-          <MetricCard
-            label="This week"
-            value={fmtMoney(week, base)}
-            animatedValue={{ amount: week, currency: base }}
-            delta={
-              prevWeek > 0
-                ? { value: `${weekDelta >= 0 ? "+" : ""}${weekDelta.toFixed(0)}%`, positive: weekDelta < 0 }
-                : undefined
-            }
-            hint={prevWeek > 0 ? "vs last" : undefined}
-          />
+          <Link to="/spending" className="lucid-press block">
+            <MetricCard
+              label="Today"
+              value={fmtMoney(today, base)}
+              animatedValue={{ amount: today, currency: base }}
+              hint="spending"
+            />
+          </Link>
+          <Link to="/spending" className="lucid-press block">
+            <MetricCard
+              label="This week"
+              value={fmtMoney(week, base)}
+              animatedValue={{ amount: week, currency: base }}
+              delta={
+                prevWeek > 0
+                  ? { value: `${weekDelta >= 0 ? "+" : ""}${weekDelta.toFixed(0)}%`, positive: weekDelta < 0 }
+                  : undefined
+              }
+              hint={prevWeek > 0 ? "vs last" : undefined}
+            />
+          </Link>
         </div>
-        <MetricCard
-          label="Investments"
-          value={fmtMoney(invest, base, { compact: true })}
-          animatedValue={{ amount: invest, currency: base, compact: true }}
-          hint={`${state.assets.filter((a) => a.kind === "crypto").length} crypto, ${state.assets.filter((a) => a.kind === "stock").length} stock`}
-        />
+        <Link to="/portfolio" className="lucid-press block">
+          <MetricCard
+            label="Investments"
+            value={fmtMoney(invest, base, { compact: true })}
+            animatedValue={{ amount: invest, currency: base, compact: true }}
+            hint={`${state.assets.filter((a) => a.kind === "crypto").length} crypto, ${state.assets.filter((a) => a.kind === "stock").length} stock`}
+          />
+        </Link>
       </div>
 
       {/* Insight strip */}
