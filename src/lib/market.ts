@@ -11,6 +11,7 @@ import { useAppStore, INVESTMENT_KINDS } from "./store";
  */
 
 const REFRESH_INTERVAL = 2 * 60 * 1000;
+const MISSING_RETRY_INTERVAL = 30 * 1000;
 
 export type QuoteResult = {
   symbol: string;
@@ -137,6 +138,16 @@ async function refreshAllHoldings() {
   }
 }
 
+/** Crypto symbols on file that don't have a price yet (or price is 0). */
+function collectMissingCrypto(): string[] {
+  const { crypto } = collectSymbols();
+  const prices = useAppStore.getState().cryptoPrices;
+  return crypto.filter((sym) => {
+    const p = prices[sym];
+    return typeof p !== "number" || p <= 0;
+  });
+}
+
 export function useMarketPrices() {
   // Track a fingerprint of investment symbols so a freshly-logged holding
   // triggers an immediate refresh instead of waiting up to 2 minutes.
@@ -151,6 +162,20 @@ export function useMarketPrices() {
   useEffect(() => {
     refreshAllHoldings();
     const id = setInterval(refreshAllHoldings, REFRESH_INTERVAL);
-    return () => clearInterval(id);
+
+    // Aggressive retry: while any crypto holding still lacks a price (e.g.
+    // first fetch at log-time failed on mobile), re-poll every 30s until
+    // every symbol has a real value. Stops itself once nothing is missing.
+    const retryId = setInterval(() => {
+      const missing = collectMissingCrypto();
+      if (!missing.length) return;
+      console.log("[market] retrying missing crypto prices:", missing);
+      fetchCryptoBatch(missing);
+    }, MISSING_RETRY_INTERVAL);
+
+    return () => {
+      clearInterval(id);
+      clearInterval(retryId);
+    };
   }, [symbolKey]);
 }
