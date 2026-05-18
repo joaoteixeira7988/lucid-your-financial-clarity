@@ -111,12 +111,12 @@ export function SwipeRow({
         }}
         className={cn(
           "relative bg-inherit transition-transform duration-150",
-          !touch && "pr-10"
+          !touch && "pr-9"
         )}
       >
         {children}
 
-        {/* Desktop hover trash icon — sits inside reserved padding. */}
+        {/* Desktop hover trash icon — sits inside reserved padding, never overlaps content. */}
         {!touch && (
           <button
             type="button"
@@ -126,11 +126,11 @@ export function SwipeRow({
               onDelete();
             }}
             className={cn(
-              "absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-destructive/12 hover:text-destructive",
+              "absolute right-1.5 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-destructive/12 hover:text-destructive",
               hover ? "opacity-100" : "opacity-0 pointer-events-none"
             )}
           >
-            <Trash2 className="h-[15px] w-[15px]" />
+            <Trash2 className="h-[13px] w-[13px]" />
           </button>
         )}
       </div>
