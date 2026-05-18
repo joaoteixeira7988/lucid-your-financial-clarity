@@ -16,7 +16,16 @@ import {
 import { fmtMoney, toBase } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import type { Asset, AssetKind } from "@/lib/types";
-import { Car, Home as HomeIcon, Gem, Laptop, Sofa, Package, Wallet, PiggyBank } from "lucide-react";
+import { Car, Home as HomeIcon, Gem, Laptop, Sofa, Package, Wallet, PiggyBank, Pencil } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/portfolio")({
@@ -338,6 +347,29 @@ function AssetsView({
   total: number;
 }) {
   const tangibles: Asset[] = state.assets.filter((a) => TANGIBLE_ASSET_KINDS.has(a.kind));
+  const [editing, setEditing] = useState<Asset | null>(null);
+  const [draft, setDraft] = useState("");
+
+  function openEdit(a: Asset) {
+    const valueInBase = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
+    setDraft(valueInBase ? valueInBase.toFixed(2).replace(/\.00$/, "") : "");
+    setEditing(a);
+  }
+
+  function saveEdit() {
+    if (!editing) return;
+    const n = parseFloat(draft.replace(/,/g, ""));
+    if (!isFinite(n) || n < 0) {
+      toast("Enter a valid number");
+      return;
+    }
+    // Convert the entered base-currency amount back into the asset's stored currency.
+    const stored = editing.currency ?? "USD";
+    const valueInStored = toBase(n, base, stored);
+    state.updateAsset(editing.id, { value: valueInStored });
+    toast("Value updated");
+    setEditing(null);
+  }
 
   return (
     <>
@@ -376,6 +408,13 @@ function AssetsView({
                           {a.kind}
                           {costInBase ? ` · cost ${fmtMoney(costInBase, base, { compact: true })}` : ""}
                         </p>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(a)}
+                          className="lucid-press mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                        >
+                          <Pencil className="h-3 w-3" /> Update value
+                        </button>
                       </div>
                     </div>
                     <div className="text-right">
@@ -405,6 +444,30 @@ function AssetsView({
         Assets keep value over time. Use Lucid to track cars, property, watches, and other items
         that should count toward your net worth — separate from money you've spent.
       </p>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Update value</DialogTitle>
+          </DialogHeader>
+          <p className="text-[13px] text-muted-foreground">
+            Enter the current value of <span className="font-medium text-foreground">{editing?.name}</span> in {base}.
+          </p>
+          <Input
+            autoFocus
+            inputMode="decimal"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") saveEdit(); }}
+            placeholder="0.00"
+            className="tabular text-lg"
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={saveEdit}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
