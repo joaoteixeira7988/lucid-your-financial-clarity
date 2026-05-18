@@ -230,7 +230,7 @@ export function ChatInput({
             `Cash balance updated (+${formatBase(baseAmt, baseCurrency)}).`
           );
         } else {
-          addAsset({
+          const newAsset = addAsset({
             kind: e.assetKind ?? "other",
             name: e.assetName ?? "Asset",
             value: rawAmt,
@@ -240,7 +240,8 @@ export function ChatInput({
           if (e.isNewPurchase) adjustCash(-baseAmt);
           addActivity(
             "asset",
-            `Added asset: ${e.assetName ?? "Asset"} (${formatBase(baseAmt, baseCurrency)}).`
+            `Added asset: ${e.assetName ?? "Asset"} (${formatBase(baseAmt, baseCurrency)}).`,
+            newAsset.id
           );
         }
       });
