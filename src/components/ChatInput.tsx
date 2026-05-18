@@ -191,7 +191,10 @@ export function ChatInput({
           currency: "USD",
           costBasis: purchaseValueUsd,
         });
-        if (purchaseValueBase != null) adjustCash(-purchaseValueBase);
+        // Only deduct cash for explicit new purchases. Statements like
+        // "I have 20k of BTC" or "I own 2 ETH" describe existing holdings —
+        // don't touch the cash balance in that case.
+        if (purchaseValueBase != null && e.isNewPurchase) adjustCash(-purchaseValueBase);
 
         const valLabel =
           purchaseValueBase != null
