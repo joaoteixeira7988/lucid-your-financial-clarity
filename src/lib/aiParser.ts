@@ -3,9 +3,10 @@ import { parseMessage as parseMessageLocal } from "./parser";
 import { useAppStore, inferCategoryFromHistory } from "./store";
 
 const CRYPTO_SYMBOLS = new Set([
-  "BTC", "ETH", "SOL", "SUI", "ADA", "XRP", "DOGE", "MATIC", "DOT", "LINK",
+  "BTC", "ETH", "SOL", "SUI", "XLM", "ADA", "XRP", "DOGE", "MATIC", "DOT", "LINK",
   "AVAX", "BNB", "TRX", "LTC", "ATOM", "NEAR", "APT", "ARB", "OP", "INJ",
-  "TON", "SHIB", "PEPE", "UNI", "AAVE", "FIL",
+  "TON", "SHIB", "PEPE", "UNI", "AAVE", "FIL", "HBAR", "ALGO", "XMR", "ETC",
+  "FTM", "VET", "SAND", "MANA", "AXS", "CRO", "TIA",
 ]);
 
 const STOCK_SYMBOLS = new Set([
