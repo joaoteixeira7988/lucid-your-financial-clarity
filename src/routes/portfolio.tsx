@@ -159,10 +159,13 @@ function groupHoldings(
     const sym = a.symbol?.toUpperCase();
     const key = sym ? `${a.kind}:${sym}` : `${a.kind}:${a.id}`;
     const value = getAssetValueInBase(a, base, cryptoPrices, stockPrices);
+    const costInBase = a.costBasis
+      ? toBase(a.costBasis, a.currency ?? "USD", base)
+      : 0;
     const existing = map.get(key);
     if (existing) {
       existing.quantity += a.quantity ?? 0;
-      existing.costBasis += a.costBasis ?? 0;
+      existing.costBasis += costInBase;
       existing.value += value;
     } else {
       map.set(key, {
@@ -171,7 +174,7 @@ function groupHoldings(
         symbol: sym,
         name: a.name,
         quantity: a.quantity ?? 0,
-        costBasis: a.costBasis ?? 0,
+        costBasis: costInBase,
         value,
       });
     }
@@ -351,8 +354,11 @@ function AssetsView({
           {tangibles.map((a) => {
             const Icon = ASSET_ICON[a.kind] ?? Package;
             const value = getAssetValueInBase(a, base, state.cryptoPrices, state.stockPrices);
-            const change = a.costBasis
-              ? ((value - a.costBasis) / a.costBasis) * 100
+            const costInBase = a.costBasis
+              ? toBase(a.costBasis, a.currency ?? "USD", base)
+              : 0;
+            const change = costInBase
+              ? ((value - costInBase) / costInBase) * 100
               : null;
             return (
               <li key={a.id}>
@@ -366,7 +372,7 @@ function AssetsView({
                         <p className="truncate text-[14px] font-medium text-foreground">{a.name}</p>
                         <p className="text-[11px] capitalize text-muted-foreground">
                           {a.kind}
-                          {a.costBasis ? ` · cost ${fmtMoney(a.costBasis, base, { compact: true })}` : ""}
+                          {costInBase ? ` · cost ${fmtMoney(costInBase, base, { compact: true })}` : ""}
                         </p>
                       </div>
                     </div>

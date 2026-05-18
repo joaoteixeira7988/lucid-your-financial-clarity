@@ -177,13 +177,19 @@ export function ChatInput({
         }
 
 
+        // Investments are anchored in USD (live prices are USD-denominated).
+        const purchaseValueUsd =
+          purchaseValueBase != null
+            ? toBase(purchaseValueBase, baseCurrency, "USD")
+            : undefined;
         addAsset({
           kind,
           symbol,
           name: e.assetName ?? resolvedName ?? symbol ?? "Investment",
           quantity,
-          value: purchaseValueBase ?? 0,
-          costBasis: purchaseValueBase,
+          value: purchaseValueUsd ?? 0,
+          currency: "USD",
+          costBasis: purchaseValueUsd,
         });
         if (purchaseValueBase != null) adjustCash(-purchaseValueBase);
 
@@ -204,7 +210,9 @@ export function ChatInput({
     } else if (result.intent === "asset_log") {
       setLastAction({ kind: "asset", at: new Date().toISOString() });
       result.entries.forEach((e) => {
-        const baseAmt = toBase(e.amount ?? 0, e.currency ?? baseCurrency, baseCurrency);
+        const rawAmt = e.amount ?? 0;
+        const rawCurrency = e.currency ?? baseCurrency;
+        const baseAmt = toBase(rawAmt, rawCurrency, baseCurrency);
         if (e.assetKind === "cash" || e.assetKind === "savings") {
           adjustCash(baseAmt);
           addActivity(
@@ -215,8 +223,9 @@ export function ChatInput({
           addAsset({
             kind: e.assetKind ?? "other",
             name: e.assetName ?? "Asset",
-            value: baseAmt,
-            costBasis: baseAmt,
+            value: rawAmt,
+            currency: rawCurrency,
+            costBasis: rawAmt,
           });
           if (e.isNewPurchase) adjustCash(-baseAmt);
           addActivity(

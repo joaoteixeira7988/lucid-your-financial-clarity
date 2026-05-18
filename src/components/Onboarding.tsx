@@ -124,13 +124,16 @@ export function Onboarding() {
       if (livePriceUsd && quantity != null && valueBase == null) {
         valueBase = toBase(quantity * livePriceUsd, "USD", base);
       }
+      const valueUsd =
+        valueBase != null ? toBase(valueBase, base, "USD") : undefined;
       addAsset({
         kind,
         symbol,
         name: e.assetName ?? resolvedName ?? symbol ?? "Investment",
         quantity,
-        value: valueBase ?? 0,
-        costBasis: valueBase,
+        value: valueUsd ?? 0,
+        currency: "USD",
+        costBasis: valueUsd,
       });
       addActivity("investment", `Added investment: ${symbol ?? e.assetName}.`);
       const valTxt = valueBase != null ? ` (${fmtMoney(valueBase, base)})` : "";

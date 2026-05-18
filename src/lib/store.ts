@@ -92,13 +92,13 @@ const seedTransactions = (base: Currency): Transaction[] => {
 };
 
 const seedAssets = (): Asset[] => [
-  { id: uid(), kind: "cash", name: "Cash", value: 3200, createdAt: new Date().toISOString() },
-  { id: uid(), kind: "savings", name: "High-yield savings", value: 12400, createdAt: new Date().toISOString() },
-  { id: uid(), kind: "vehicle", name: "Car", value: 28000, costBasis: 32000, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 200).toISOString() },
-  { id: uid(), kind: "valuable", name: "Watch", value: 6500, costBasis: 6800, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString() },
-  { id: uid(), kind: "crypto", symbol: "BTC", name: "Bitcoin", quantity: 0.12, value: 0, createdAt: new Date().toISOString() },
-  { id: uid(), kind: "crypto", symbol: "ETH", name: "Ethereum", quantity: 1.4, value: 0, createdAt: new Date().toISOString() },
-  { id: uid(), kind: "stock", symbol: "VOO", name: "S&P 500 ETF", quantity: 12, value: 6240, createdAt: new Date().toISOString() },
+  { id: uid(), kind: "cash", name: "Cash", value: 3200, currency: "USD", createdAt: new Date().toISOString() },
+  { id: uid(), kind: "savings", name: "High-yield savings", value: 12400, currency: "USD", createdAt: new Date().toISOString() },
+  { id: uid(), kind: "vehicle", name: "Car", value: 28000, costBasis: 32000, currency: "USD", createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 200).toISOString() },
+  { id: uid(), kind: "valuable", name: "Watch", value: 6500, costBasis: 6800, currency: "USD", createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString() },
+  { id: uid(), kind: "crypto", symbol: "BTC", name: "Bitcoin", quantity: 0.12, value: 0, currency: "USD", createdAt: new Date().toISOString() },
+  { id: uid(), kind: "crypto", symbol: "ETH", name: "Ethereum", quantity: 1.4, value: 0, currency: "USD", createdAt: new Date().toISOString() },
+  { id: uid(), kind: "stock", symbol: "VOO", name: "S&P 500 ETF", quantity: 12, value: 6240, currency: "USD", createdAt: new Date().toISOString() },
 ];
 
 const seedActivity = (): ActivityItem[] => {
@@ -203,22 +203,26 @@ export const useAppStore = create<State>()(
         const s = get();
         const cash = s.assets.find((a) => a.kind === "cash");
         if (!cash) {
-          // Auto-create a cash asset so net worth stays coherent.
+          // Auto-create a cash asset (canonical USD) so net worth stays coherent.
+          const usdDelta = toBase(deltaInBase, s.baseCurrency, "USD");
           const created: Asset = {
             id: uid(),
             kind: "cash",
             name: "Cash",
-            value: Math.max(0, deltaInBase),
+            value: Math.max(0, usdDelta),
+            currency: "USD",
             createdAt: new Date().toISOString(),
           };
           set({ assets: [created, ...s.assets] });
-          return created.value;
+          return toBase(created.value, "USD", s.baseCurrency);
         }
-        const next = cash.value + deltaInBase;
+        const cashCurrency = cash.currency ?? "USD";
+        const deltaInCash = toBase(deltaInBase, s.baseCurrency, cashCurrency);
+        const next = cash.value + deltaInCash;
         set({
           assets: s.assets.map((a) => (a.id === cash.id ? { ...a, value: next } : a)),
         });
-        return next;
+        return toBase(next, cashCurrency, s.baseCurrency);
       },
       addLiability: (l) => {
         const liab: Liability = { ...l, id: uid(), createdAt: new Date().toISOString() };
@@ -267,7 +271,20 @@ export const useAppStore = create<State>()(
     }),
     {
       name: "lucid-store-v3",
-      version: 3,
+      version: 4,
+      migrate: (persisted: any, version) => {
+        if (!persisted) return persisted;
+        if (version < 4 && Array.isArray(persisted.assets)) {
+          // Pre-v4: asset.value was stored in the persisted baseCurrency.
+          // Stamp it onto each asset so future base-currency switches convert.
+          const stamp = persisted.baseCurrency ?? "USD";
+          persisted.assets = persisted.assets.map((a: any) => ({
+            ...a,
+            currency: a.currency ?? stamp,
+          }));
+        }
+        return persisted;
+      },
       // Don't persist onboarding/session-only state — onboarding should be
       // driven by real data presence, not a sticky flag that can drift.
       partialize: (s) => ({
@@ -312,17 +329,19 @@ export function getAssetValueInBase(
   prices: Record<string, number>,
   stockPrices?: Record<string, number>
 ): number {
+  const stored = asset.currency ?? "USD";
+  const fallback = toBase(asset.value || 0, stored, base);
   if (asset.kind === "crypto" && asset.symbol && asset.quantity != null) {
     const usd = (prices[asset.symbol] ?? 0) * asset.quantity;
     if (usd > 0) return toBase(usd, "USD", base);
-    return asset.value || 0;
+    return fallback;
   }
   if (asset.kind === "stock" && asset.symbol && asset.quantity != null && stockPrices) {
     const usd = (stockPrices[asset.symbol] ?? 0) * asset.quantity;
     if (usd > 0) return toBase(usd, "USD", base);
-    return asset.value || 0;
+    return fallback;
   }
-  return asset.value || 0;
+  return fallback;
 }
 
 export function getNetWorth(state: State): number {

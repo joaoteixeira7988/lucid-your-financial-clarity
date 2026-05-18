@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { useAppStore, getSpendInRange, getNetWorth, getCategorySpend } from "@/lib/store";
+import { useAppStore, getSpendInRange, getNetWorth, getCategorySpend, getAssetValueInBase } from "@/lib/store";
 import { fmtMoney } from "@/lib/currency";
 import { Sparkles, Target, TrendingUp, TrendingDown } from "lucide-react";
 
@@ -111,7 +111,7 @@ function InsightsPage() {
               // estimate: assume saved = current cash + savings - target offset
               const saved = state.assets
                 .filter((a) => a.kind === "cash" || a.kind === "savings")
-                .reduce((s, a) => s + a.value, 0);
+                .reduce((s, a) => s + getAssetValueInBase(a, state.baseCurrency, state.cryptoPrices, state.stockPrices), 0);
               const progress = g.type === "save" ? pct(saved, g.targetAmount) : 50;
               return (
                 <li key={g.id} className="px-5 py-4">
